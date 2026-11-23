@@ -119,6 +119,9 @@ class CameraTestRequest(BaseModel):
     width: Optional[int] = 1280
     height: Optional[int] = 720
 
+class FrameIngestRequest(BaseModel):
+    image: str
+
 # Review
 class ReviewResolveRequest(BaseModel):
     action: str = Field(..., description="CONFIRM, REJECT, MANUAL_SELECT, DISMISS")

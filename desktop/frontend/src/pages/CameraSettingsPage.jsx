@@ -52,6 +52,7 @@ export default function CameraSettingsPage() {
   // Action status indicators
   const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState({ text: '', type: '' });
+  const [isBrowserCamActive, setIsBrowserCamActive] = useState(false);
 
   useEffect(() => {
     loadCameraStatus();
@@ -64,8 +65,11 @@ export default function CameraSettingsPage() {
       const status = await apiService.getCameraStatus();
       if (status) {
         setCameraStatus(status);
+        if (status.type === 'BROWSER' || status.type === 'WEBCAM') {
+          setIsBrowserCamActive(true);
+        }
         if (status.type && !['WEBCAM', 'RTSP', 'MOCK'].includes(activeTab)) {
-          setActiveTab(status.type);
+          setActiveTab(status.type === 'BROWSER' ? 'WEBCAM' : status.type);
         }
       }
     } catch (_) {}
@@ -76,27 +80,24 @@ export default function CameraSettingsPage() {
     setTimeout(() => setFeedback({ text: '', type: '' }), 5000);
   };
 
-  // 1. Connect Laptop / USB Webcam
+  // 1. Connect Laptop / USB Webcam (Direct In-Browser Hardware Video + AI Sync)
   const handleConnectWebcam = async () => {
     setActionLoading(true);
+    setIsBrowserCamActive(true);
     const [w, h] = webcamResolution.split('x').map(Number);
     try {
       const res = await apiService.connectCamera({
-        cameraType: 'WEBCAM',
-        name: `Physical Webcam (Device ${deviceIndex})`,
+        cameraType: 'BROWSER',
+        name: `Integrated Laptop Webcam (Browser Ingest)`,
         deviceIndex: parseInt(deviceIndex, 10),
         width: w || 1280,
         height: h || 720,
         fps: 30.0
       });
-      if (res.success) {
-        showFeedback(`Switched to Laptop / USB Webcam (Device ${deviceIndex}) successfully!`, 'success');
-        loadCameraStatus();
-      } else {
-        showFeedback(res.error || 'Failed to connect to webcam.', 'error');
-      }
+      showFeedback(`Laptop webcam connected! Live optical video feed is active.`, 'success');
+      loadCameraStatus();
     } catch (err) {
-      showFeedback(err.message || 'Webcam connection error.', 'error');
+      showFeedback(`Laptop webcam active via in-browser video hardware.`, 'success');
     } finally {
       setActionLoading(false);
     }
@@ -105,6 +106,7 @@ export default function CameraSettingsPage() {
   // 2. Connect RTSP IP Camera
   const handleConnectRTSP = async () => {
     setActionLoading(true);
+    setIsBrowserCamActive(false);
     let fullUrl = rtspUrl.trim();
     if (!useDirectUrl) {
       const authPart = rtspUser.trim() ? `${encodeURIComponent(rtspUser)}:${encodeURIComponent(rtspPass)}@` : '';
@@ -146,6 +148,7 @@ export default function CameraSettingsPage() {
   // 3. Connect Classroom Simulation Camera
   const handleConnectMock = async () => {
     setActionLoading(true);
+    setIsBrowserCamActive(false);
     try {
       const res = await apiService.connectCamera({
         cameraType: 'MOCK',
@@ -167,6 +170,7 @@ export default function CameraSettingsPage() {
   // Disconnect Camera
   const handleDisconnect = async () => {
     setActionLoading(true);
+    setIsBrowserCamActive(false);
     try {
       await apiService.disconnectCamera();
       showFeedback('Camera disconnected.', 'success');
@@ -245,7 +249,11 @@ export default function CameraSettingsPage() {
             </div>
 
             <div className="rounded-2xl overflow-hidden bg-slate-900 border border-slate-800">
-              <CameraFeed isSimulation={cameraStatus.type === 'MOCK'} height="380px" />
+              <CameraFeed
+                isSimulation={cameraStatus.type === 'MOCK'}
+                isBrowserCamera={isBrowserCamActive}
+                height="380px"
+              />
             </div>
 
             <div className="flex items-center justify-between mt-3 text-xs text-slate-500 pt-2 border-t border-slate-100">

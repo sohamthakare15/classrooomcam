@@ -60,6 +60,15 @@ export const apiService = {
     return await res.blob();
   },
 
+  async ingestCameraFrame(base64Image) {
+    const res = await fetch(`${BASE_URL}/camera/frame/ingest`, {
+      method: 'POST',
+      headers: defaultHeaders,
+      body: JSON.stringify({ image: base64Image })
+    });
+    return handleResponse(res);
+  },
+
   getReviewCropUrl(reviewId) {
     return `${BASE_URL}/recognition/review/${reviewId}/crop`;
   },

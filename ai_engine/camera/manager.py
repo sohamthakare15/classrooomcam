@@ -14,6 +14,7 @@ from ai_engine.camera.mock_camera import MockCamera
 from ai_engine.camera.video_camera import VideoFileCamera
 from ai_engine.camera.rtsp_camera import RTSPCamera
 from ai_engine.camera.webcam_camera import WebcamCamera
+from ai_engine.camera.browser_camera import BrowserIngestCamera
 from ai_engine.camera.onvif_discovery import ONVIFDiscovery
 
 class CameraManager:
@@ -81,19 +82,33 @@ class CameraManager:
                     password=config.get("password"),
                     transport=config.get("transport", "tcp")
                 )
-            elif c_type == "WEBCAM":
-                self.active_camera = WebcamCamera(
+            elif c_type in ["WEBCAM", "BROWSER"]:
+                # Try physical webcam first
+                webcam = WebcamCamera(
                     device_index=int(config.get("device_index", config.get("deviceIndex", 0))),
                     name=config.get("name", "Laptop Integrated Webcam"),
                     width=int(config.get("width", 1280)),
                     height=int(config.get("height", 720)),
                     fps=float(config.get("fps", 30.0))
                 )
+                if webcam.start():
+                    self.active_camera = webcam
+                    self.camera_type = "WEBCAM"
+                    success = True
+                else:
+                    # Cloud fallback (e.g. Render/Docker): enable Browser Ingest mode
+                    print("[CameraManager] Host webcam not directly attached; switching to Browser Ingest mode.")
+                    browser_cam = BrowserIngestCamera(name="Browser Web Camera")
+                    browser_cam.start()
+                    self.active_camera = browser_cam
+                    self.camera_type = "BROWSER"
+                    success = True
             else:
                 raise ValueError(f"Unsupported camera type: {camera_type}")
 
-            self.camera_type = c_type
-            success = self.active_camera.start()
+            if c_type not in ["WEBCAM", "BROWSER"]:
+                self.camera_type = c_type
+                success = self.active_camera.start()
             return {
                 "success": success,
                 "type": self.camera_type,
@@ -124,6 +139,17 @@ class CameraManager:
     def discover_onvif_cameras(self, timeout_sec: float = 2.5) -> List[Dict[str, Any]]:
         """Discovers ONVIF IP cameras on the local Wi-Fi / LAN."""
         return ONVIFDiscovery.discover_cameras(timeout_sec=timeout_sec)
+
+    def ingest_browser_frame(self, frame_bgr: np.ndarray) -> bool:
+        """Ingests a video frame sent from the client's web browser."""
+        with self._manager_lock:
+            if not isinstance(self.active_camera, BrowserIngestCamera):
+                browser_cam = BrowserIngestCamera(name="Browser Web Camera")
+                browser_cam.start()
+                self.active_camera = browser_cam
+                self.camera_type = "BROWSER"
+            self.last_frame = frame_bgr
+            return self.active_camera.ingest_frame(frame_bgr)
 
     def get_frame(self) -> tuple[bool, Optional[np.ndarray]]:
         if self.active_camera is None:

@@ -18,6 +18,7 @@ from ai_engine.api.schemas import (
     FinalizeSessionRequest,
     CameraConnectRequest,
     CameraTestRequest,
+    FrameIngestRequest,
     ReviewResolveRequest,
     LoginRequest,
     UserCreateRequest,
@@ -481,6 +482,24 @@ def stream_camera():
         camera_manager.generate_mjpeg_stream(),
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
+
+@router.post("/camera/frame/ingest")
+def ingest_client_camera_frame(req: FrameIngestRequest):
+    """Receives in-browser camera frames from client via WebRTC/canvas and feeds to AI engine."""
+    data = req.image
+    if "," in data:
+        data = data.split(",", 1)[1]
+    try:
+        import numpy as np
+        raw_bytes = base64.b64decode(data)
+        nparr = np.frombuffer(raw_bytes, np.uint8)
+        frame_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if frame_bgr is not None:
+            camera_manager.ingest_browser_frame(frame_bgr)
+            return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Frame decode error: {str(e)}")
+    return {"success": False, "error": "Invalid frame data"}
 
 @router.get("/camera/snapshot")
 def get_camera_snapshot():
