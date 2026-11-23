@@ -36,7 +36,4 @@ services:
       - key: VITE_AI_API_TOKEN
         value: smartclassroom-secure-ipc-token-2026
       - key: VITE_AI_BACKEND_URL
-        fromService:
-          type: web
-          name: smartclassroom-api
-          property: host
+        value: https://smartclassroom-api-h96b.onrender.com

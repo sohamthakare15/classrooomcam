@@ -3,7 +3,18 @@
  * Connects React UI to FastAPI Python server on 127.0.0.1:8000.
  */
 
-const rawBackend = (import.meta.env.VITE_AI_BACKEND_URL || 'http://127.0.0.1:8000').trim().replace(/\/+$/, '');
+let envUrl = import.meta.env.VITE_AI_BACKEND_URL;
+if (!envUrl) {
+  const isLocal = typeof window !== 'undefined' && 
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  envUrl = isLocal ? 'http://127.0.0.1:8000' : 'https://smartclassroom-api-h96b.onrender.com';
+}
+
+let rawBackend = envUrl.trim().replace(/\/+$/, '');
+if (!rawBackend.includes('.') && !rawBackend.includes('localhost') && !rawBackend.includes('127.0.0.1')) {
+  rawBackend = `${rawBackend}.onrender.com`;
+}
+
 const BASE_URL = (!rawBackend.startsWith('http://') && !rawBackend.startsWith('https://'))
   ? `https://${rawBackend}`
   : rawBackend;
