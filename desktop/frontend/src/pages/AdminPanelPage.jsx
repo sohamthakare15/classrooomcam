@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import {
   ShieldCheck,
   UserPlus,
@@ -25,6 +26,11 @@ import Modal from '../components/Modal';
 
 export default function AdminPanelPage() {
   const { currentUser, isAdmin } = useAuth();
+
+  // Strict Role Guard: Redirect non-admin users immediately to Dashboard
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);

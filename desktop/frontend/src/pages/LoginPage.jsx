@@ -38,7 +38,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-10 sm:px-6 lg:px-8 select-none relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8 select-none relative overflow-hidden">
       {/* Ambient background glowing orbs */}
       <div className="ambient-bg" aria-hidden="true">
         <div className="ambient-glow-1" />
@@ -57,7 +57,7 @@ export default function LoginPage() {
       </div>
 
       <div className="relative z-10 mt-6 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="glass-card py-8 px-6 sm:px-10 border border-white/90 shadow-xl">
+        <div className="glass-card py-7 px-5 sm:px-10 border border-white/90 shadow-xl">
           {/* Header */}
           <div className="mb-6 text-center">
             <h3 className="text-base font-extrabold text-slate-900 flex items-center justify-center gap-2">
