@@ -18,8 +18,9 @@ services:
         value: https://classroomcam-1b81d-default-rtdb.asia-southeast1.firebasedatabase.app
 
   # 2. React + Vite Frontend Static Site
-  - type: static
+  - type: web
     name: smartclassroom-ui
+    runtime: static
     region: singapore
     rootDir: desktop/frontend
     buildCommand: npm install && npm run build
