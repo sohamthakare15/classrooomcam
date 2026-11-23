@@ -1,0 +1,11 @@
+rtspAddress: :8554
+rtmp: no
+hls: no
+webrtc: no
+srt: no
+
+paths:
+  classroom:
+    alwaysAvailable: true
+    alwaysAvailableTracks:
+      - codec: H264

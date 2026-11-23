@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Storage & Secrets
+storage/.secrets/
+storage/templates/*.enc
+storage/photos/*.jpg
+storage/review_crops/*.jpg
+storage/offline_queue.db
+storage_test_env/
+
+# Build artifacts
+desktop/frontend/dist/
+dist/
+build/
+*.exe
+
+# Environment & Credentials
+.env
+*.local
+firebase-adminsdk*.json
+serviceAccountKey.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+

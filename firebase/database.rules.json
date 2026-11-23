@@ -1,0 +1,71 @@
+{
+  "rules": {
+    "students": {
+      ".read": true,
+      "$studentId": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['studentId', 'fullName', 'rollNumber', 'class', 'section']) && !newData.hasChildren(['embedding', 'biometricTemplate', 'faceVector', 'template'])",
+        "studentId": { ".validate": "newData.isString() && newData.val() === $studentId" },
+        "fullName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length < 100" },
+        "rollNumber": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "class": { ".validate": "newData.isString()" },
+        "section": { ".validate": "newData.isString()" },
+        "enrollmentStatus": { ".validate": "newData.isString()" }
+      }
+    },
+    "attendance_sessions": {
+      ".read": true,
+      "$sessionId": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['sessionId', 'class', 'section', 'date', 'status'])",
+        "sessionId": { ".validate": "newData.isString() && newData.val() === $sessionId" },
+        "status": { ".validate": "newData.val() === 'in_progress' || newData.val() === 'completed' || newData.val() === 'cancelled'" },
+        "presentCount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "absentCount": { ".validate": "newData.isNumber() && newData.val() >= 0" }
+      }
+    },
+    "attendance_records": {
+      ".read": true,
+      "$recordId": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['recordId', 'sessionId', 'studentId', 'status']) && (!data.exists() || (newData.child('sessionId').val() === data.child('sessionId').val() && newData.child('studentId').val() === data.child('studentId').val()))",
+        "recordId": { ".validate": "newData.isString() && newData.val() === $recordId && $recordId.contains('session_') && $recordId.contains('_student_')" },
+        "sessionId": { ".validate": "newData.isString()" },
+        "studentId": { ".validate": "newData.isString()" },
+        "status": { ".validate": "newData.val() === 'present' || newData.val() === 'absent' || newData.val() === 'late' || newData.val() === 'manually_added' || newData.val() === 'needs_review'" },
+        "confidenceScore": { ".validate": "newData.isNumber()" }
+      }
+    },
+    "attendance_audit_logs": {
+      ".read": true,
+      "$logId": {
+        ".write": "!data.exists()",
+        ".validate": "newData.hasChildren(['logId', 'sessionId', 'studentId', 'action', 'timestamp'])",
+        "logId": { ".validate": "newData.isString() && newData.val() === $logId" },
+        "timestamp": { ".validate": "newData.isNumber()" }
+      }
+    },
+    "review_queue": {
+      ".read": true,
+      "$reviewId": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['reviewId', 'candidateStudentId', 'status'])",
+        "reviewId": { ".validate": "newData.isString() && newData.val() === $reviewId" },
+        "status": { ".validate": "newData.val() === 'pending' || newData.val() === 'confirmed' || newData.val() === 'rejected' || newData.val() === 'dismissed'" }
+      }
+    },
+    "classrooms": {
+      ".read": true,
+      ".write": true
+    },
+    "application_settings": {
+      ".read": true,
+      ".write": true
+    },
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}
+

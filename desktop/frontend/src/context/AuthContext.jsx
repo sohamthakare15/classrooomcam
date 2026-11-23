@@ -1,0 +1,113 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { apiService } from '../services/apiService';
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+
+  useEffect(() => {
+    // Local session persistence with expiration check
+    const saved = localStorage.getItem('smartclassroom_auth_session');
+    if (saved) {
+      try {
+        const session = JSON.parse(saved);
+        const now = Date.now();
+        if (session.expiresAt && now > session.expiresAt) {
+          localStorage.removeItem('smartclassroom_auth_session');
+          setCurrentUser(null);
+        } else {
+          setCurrentUser(session.user);
+        }
+      } catch (_) {
+        localStorage.removeItem('smartclassroom_auth_session');
+      }
+    } else {
+      // No demo teacher session; user must authenticate via login portal
+      setCurrentUser(null);
+    }
+    setLoading(false);
+  }, []);
+
+  const login = async (identifier, password) => {
+    setLoading(true);
+    setAuthError(null);
+
+    try {
+      const res = await apiService.login(identifier, password);
+      if (res && res.user) {
+        const user = res.user;
+        const session = {
+          user,
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000
+        };
+        localStorage.setItem('smartclassroom_auth_session', JSON.stringify(session));
+        setCurrentUser(user);
+        return user;
+      }
+      throw new Error("Invalid response from authentication server");
+    } catch (err) {
+      setAuthError(err.message || 'Authentication failed');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const registerTeacher = async ({ email, password, fullName, department }) => {
+    setLoading(true);
+    setAuthError(null);
+    try {
+      const res = await apiService.createUser({
+        email,
+        password,
+        fullName,
+        role: 'teacher',
+        department: department || 'Academic Faculty'
+      });
+      if (res && res.user) {
+        return res.user;
+      }
+      throw new Error(res.message || 'Failed to create teacher account');
+    } catch (err) {
+      setAuthError(err.message || 'Registration failed');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('smartclassroom_auth_session');
+    setCurrentUser(null);
+  };
+
+  const isAdmin = currentUser?.role === 'admin';
+  const isTeacher = currentUser?.role === 'teacher' || isAdmin;
+
+  return (
+    <AuthContext.Provider value={{
+      currentUser,
+      loading,
+      authError,
+      login,
+      registerTeacher,
+      logout,
+      isAdmin,
+      isTeacher
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+}
+
