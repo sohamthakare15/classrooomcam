@@ -124,6 +124,14 @@ function AppLayout() {
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+
+          {/* Global Application Footer */}
+          <footer className="mt-8 pt-4 pb-2 border-t border-slate-200/60 text-center select-none">
+            <p className="text-[11px] text-slate-400 font-medium">
+              Designed and Developed by{' '}
+              <span className="font-bold text-slate-600">CodeNBuild Technologies</span>
+            </p>
+          </footer>
         </main>
 
         {/* Mobile Quick Navigation Bar (Finger-friendly Thumb Navigation) */}
