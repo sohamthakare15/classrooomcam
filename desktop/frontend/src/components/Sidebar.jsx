@@ -6,6 +6,7 @@ import {
   Users,
   Layers,
   History,
+  Camera,
   ShieldCheck,
   GraduationCap,
   X
@@ -19,6 +20,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Take Attendance', path: '/attendance', icon: CheckSquare },
+    { name: 'Camera & Hardware', path: '/camera', icon: Camera },
     { name: 'Students', path: '/students', icon: Users },
     { name: 'Classes & Sections', path: '/sections', icon: Layers },
     { name: 'Attendance History', path: '/history', icon: History },
