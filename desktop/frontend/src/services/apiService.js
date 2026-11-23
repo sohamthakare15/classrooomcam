@@ -3,7 +3,11 @@
  * Connects React UI to FastAPI Python server on 127.0.0.1:8000.
  */
 
-const BASE_URL = import.meta.env.VITE_AI_BACKEND_URL || 'http://127.0.0.1:8000';
+const rawBackend = (import.meta.env.VITE_AI_BACKEND_URL || 'http://127.0.0.1:8000').trim().replace(/\/+$/, '');
+const BASE_URL = (!rawBackend.startsWith('http://') && !rawBackend.startsWith('https://'))
+  ? `https://${rawBackend}`
+  : rawBackend;
+
 const API_TOKEN = import.meta.env.VITE_AI_API_TOKEN || 'smartclassroom-secure-ipc-token-2026';
 
 const defaultHeaders = {
@@ -15,8 +19,15 @@ async function handleResponse(res) {
   if (!res.ok) {
     let errorMsg = `HTTP Error ${res.status}`;
     try {
-      const err = await res.json();
-      errorMsg = err.detail || err.message || errorMsg;
+      const text = await res.text();
+      try {
+        const err = JSON.parse(text);
+        errorMsg = err.detail || err.message || errorMsg;
+      } catch (_) {
+        if (text && text.length < 200 && !text.includes('<!doctype') && !text.includes('<html')) {
+          errorMsg = text;
+        }
+      }
     } catch (_) {}
     throw new Error(errorMsg);
   }
