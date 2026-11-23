@@ -496,7 +496,12 @@ def ingest_client_camera_frame(req: FrameIngestRequest):
         frame_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         if frame_bgr is not None:
             camera_manager.ingest_browser_frame(frame_bgr)
-            return {"success": True}
+            annotated = attendance_engine.process_single_frame(frame_bgr)
+            camera_manager.last_processed_frame = annotated
+            return {
+                "success": True,
+                "faces": getattr(attendance_engine, "last_detected_faces", [])
+            }
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Frame decode error: {str(e)}")
     return {"success": False, "error": "Invalid frame data"}

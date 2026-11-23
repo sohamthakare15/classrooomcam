@@ -3,7 +3,6 @@ import { apiService } from '../services/apiService';
 import { Video, RefreshCw, ShieldAlert, Camera, CheckCircle2 } from 'lucide-react';
 
 export default function CameraFeed({
-  isSimulation = true,
   isBrowserCamera = false,
   height = "420px"
 }) {
@@ -14,6 +13,7 @@ export default function CameraFeed({
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const overlayCanvasRef = useRef(null);
   const streamRef = useRef(null);
 
   const streamUrl = `${apiService.getCameraStreamUrl()}?t=${key}`;
@@ -40,22 +40,97 @@ export default function CameraFeed({
           }
           setIsCapturing(true);
 
-          // Ingest frames into AI engine every 400ms
-          intervalId = setInterval(() => {
+          // Ingest frames into AI engine every 350ms and render returned green boxes
+          intervalId = setInterval(async () => {
             if (!videoRef.current || !canvasRef.current) return;
             const video = videoRef.current;
             const canvas = canvasRef.current;
+            const overlay = overlayCanvasRef.current;
             if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
-            canvas.width = Math.min(video.videoWidth, 640);
-            canvas.height = Math.min(video.videoHeight, 480);
+            // Frame extraction for AI
+            const scale = Math.min(1.0, 640 / video.videoWidth);
+            canvas.width = Math.round(video.videoWidth * scale);
+            canvas.height = Math.round(video.videoHeight * scale);
             const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-              const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-              apiService.ingestCameraFrame(dataUrl).catch(() => {});
-            }
-          }, 400);
+            if (!ctx) return;
+
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+
+            try {
+              const res = await apiService.ingestCameraFrame(dataUrl);
+
+              // Render YOLO/OpenCV-style Green Bounding Boxes on Overlay Canvas
+              if (overlay) {
+                overlay.width = video.clientWidth || video.videoWidth;
+                overlay.height = video.clientHeight || video.videoHeight;
+                const oCtx = overlay.getContext('2d');
+                if (oCtx) {
+                  oCtx.clearRect(0, 0, overlay.width, overlay.height);
+
+                  if (res && res.faces && res.faces.length > 0) {
+                    const scaleX = overlay.width / canvas.width;
+                    const scaleY = overlay.height / canvas.height;
+
+                    res.faces.forEach((face) => {
+                      const [bx, by, bw, bh] = face.bbox;
+                      const x = bx * scaleX;
+                      const y = by * scaleY;
+                      const w = bw * scaleX;
+                      const h = bh * scaleY;
+
+                      // 1. Vibrant Green Bounding Box
+                      oCtx.strokeStyle = '#00FF66';
+                      oCtx.lineWidth = 2.5;
+                      oCtx.strokeRect(x, y, w, h);
+
+                      // 2. High-Tech YOLO Corner Brackets
+                      const cLen = Math.max(10, Math.min(w, h) * 0.25);
+                      oCtx.strokeStyle = '#00FF00';
+                      oCtx.lineWidth = 4;
+                      oCtx.beginPath();
+                      // Top-Left
+                      oCtx.moveTo(x, y + cLen);
+                      oCtx.lineTo(x, y);
+                      oCtx.lineTo(x + cLen, y);
+                      // Top-Right
+                      oCtx.moveTo(x + w - cLen, y);
+                      oCtx.lineTo(x + w, y);
+                      oCtx.lineTo(x + w, y + cLen);
+                      // Bottom-Left
+                      oCtx.moveTo(x, y + h - cLen);
+                      oCtx.lineTo(x, y + h);
+                      oCtx.lineTo(x + cLen, y + h);
+                      // Bottom-Right
+                      oCtx.moveTo(x + w - cLen, y + h);
+                      oCtx.lineTo(x + w, y + h);
+                      oCtx.lineTo(x + w, y + h - cLen);
+                      oCtx.stroke();
+
+                      // 3. Label Tag above box
+                      const label = face.label || 'STUDENT FACE';
+                      oCtx.font = 'bold 12px "JetBrains Mono", monospace';
+                      const textWidth = oCtx.measureText(label).width;
+                      const tagHeight = 22;
+                      const tagY = Math.max(0, y - tagHeight);
+
+                      // Background badge
+                      oCtx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                      oCtx.fillRect(x, tagY, textWidth + 12, tagHeight);
+                      oCtx.strokeStyle = '#00FF66';
+                      oCtx.lineWidth = 1;
+                      oCtx.strokeRect(x, tagY, textWidth + 12, tagHeight);
+
+                      // Text
+                      oCtx.fillStyle = '#00FF66';
+                      oCtx.fillText(label, x + 6, tagY + 15);
+                    });
+                  }
+                }
+              }
+            } catch (_) {}
+          }, 350);
         })
         .catch((err) => {
           console.warn("Browser camera access denied or unavailable:", err);
@@ -63,12 +138,15 @@ export default function CameraFeed({
           setIsCapturing(false);
         });
     } else {
-      // Clean up browser camera stream when switching away
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
       setIsCapturing(false);
+      if (overlayCanvasRef.current) {
+        const oCtx = overlayCanvasRef.current.getContext('2d');
+        if (oCtx) oCtx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
+      }
     }
 
     return () => {
@@ -95,19 +173,19 @@ export default function CameraFeed({
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">
-            {isBrowserCamera ? 'Direct Browser Web Camera (YuNet AI Synced)' : 'Live AI Optical Recognition Feed'}
+            {isBrowserCamera ? 'Live Web Camera (YuNet & OpenCV AI Active)' : 'Live AI Optical Recognition Feed'}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {isBrowserCamera && (
+          {isBrowserCamera ? (
             <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
               <Camera className="w-3 h-3" />
               PHYSICAL WEBCAM ACTIVE
             </span>
-          )}
-          {!isBrowserCamera && isSimulation && (
-            <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-semibold px-2 py-0.5 rounded">
-              SIMULATION MODE
+          ) : (
+            <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-[11px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+              <Video className="w-3 h-3" />
+              RTSP IP STREAM
             </span>
           )}
           <button
@@ -121,7 +199,7 @@ export default function CameraFeed({
       </div>
 
       {/* Video Stream Canvas */}
-      <div className="relative flex items-center justify-center bg-black" style={{ minHeight: height }}>
+      <div className="relative flex items-center justify-center bg-black overflow-hidden" style={{ minHeight: height }}>
         {isBrowserCamera ? (
           browserPermissionError ? (
             <div className="text-center p-8 space-y-3">
@@ -138,13 +216,20 @@ export default function CameraFeed({
               </button>
             </div>
           ) : (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-auto object-contain max-h-[500px]"
-            />
+            <div className="relative w-full h-full flex items-center justify-center">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-auto object-contain max-h-[500px]"
+              />
+              {/* High-Precision YOLO/OpenCV Overlay Canvas */}
+              <canvas
+                ref={overlayCanvasRef}
+                className="absolute inset-0 w-full h-full pointer-events-none"
+              />
+            </div>
           )
         ) : streamError ? (
           <div className="text-center p-8 space-y-3">

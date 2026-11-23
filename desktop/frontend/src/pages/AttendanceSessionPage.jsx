@@ -458,7 +458,6 @@ export default function AttendanceSessionPage() {
         {/* Left: Camera Feed (7 Cols) */}
         <div className="lg:col-span-7 space-y-4">
           <CameraFeed
-            isSimulation={cameraInfo.type === 'MOCK'}
             isBrowserCamera={cameraInfo.type === 'BROWSER' || cameraInfo.type === 'WEBCAM'}
             height="440px"
           />

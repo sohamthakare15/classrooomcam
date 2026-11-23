@@ -87,25 +87,28 @@ class AttendanceEngine:
         frame_interval = 0.065 # Target ~15 FPS AI inferences for smooth CPU usage
 
         while not self._stop_event.is_set():
-            t0 = time.time()
-            success, frame = self.camera_manager.get_frame()
+            try:
+                t0 = time.time()
+                success, frame = self.camera_manager.get_frame()
 
-            if not success or frame is None:
+                if not success or frame is None:
+                    time.sleep(0.05)
+                    continue
+
+                # Process frame through AI pipeline
+                annotated_frame = self.process_single_frame(frame)
+                self.camera_manager.last_processed_frame = annotated_frame
+
+                elapsed = time.time() - t0
+                dt = time.time() - last_time
+                last_time = time.time()
+                if dt > 0:
+                    self.fps_metric = 0.9 * self.fps_metric + 0.1 * (1.0 / dt)
+
+                sleep_time = max(0.001, frame_interval - elapsed)
+                time.sleep(sleep_time)
+            except Exception:
                 time.sleep(0.05)
-                continue
-
-            # Process frame through AI pipeline
-            annotated_frame = self.process_single_frame(frame)
-            self.camera_manager.last_processed_frame = annotated_frame
-
-            elapsed = time.time() - t0
-            dt = time.time() - last_time
-            last_time = time.time()
-            if dt > 0:
-                self.fps_metric = 0.9 * self.fps_metric + 0.1 * (1.0 / dt)
-
-            sleep_time = max(0.001, frame_interval - elapsed)
-            time.sleep(sleep_time)
 
     def process_single_frame(self, frame: np.ndarray) -> np.ndarray:
         """Runs detector, tracker, alignment, and recognizer on a single frame."""
@@ -121,6 +124,7 @@ class AttendanceEngine:
         # 3. For each face, recognize
         templates = self.enrollment_manager.enrolled_cache
         num_detected = len(detected_faces)
+        detected_info = []
 
         for face in detected_faces:
             x, y, fw, fh = face.bbox
@@ -152,10 +156,10 @@ class AttendanceEngine:
             status = match_res["status"]
             confidence = match_res["confidence"]
 
-            # Visual Annotation styles
+            # Visual Annotation styles (OpenCV / YOLO-style Green Bounding Boxes)
             if status == "CONFIRMED" and best_id:
-                color = (0, 200, 100) # Green
-                label = f"ID: {best_id} ({int(confidence * 100)}%) - VERIFIED"
+                color = (0, 255, 0) # Bright Vibrant Green
+                label = f"STUDENT: {best_id} ({int(confidence * 100)}%) - VERIFIED"
 
                 # Check and register attendance
                 if self.active_session_id and best_id not in self.marked_student_ids:
@@ -175,22 +179,49 @@ class AttendanceEngine:
                     print(f"[AttendanceEngine] Marked present: {best_id} ({confidence:.2f})")
 
             elif status == "NEEDS_REVIEW" and best_id:
-                color = (0, 165, 255) # Orange / Amber
-                label = f"REVIEW: {best_id} ({int(confidence * 100)}%)"
+                color = (0, 255, 120) # Bright Green
+                label = f"MATCHING: {best_id} ({int(confidence * 100)}%)"
 
                 # Register review item (cooldown per student ~10s)
                 self._register_review_item(best_id, confidence, aligned, face.bbox)
 
             else:
-                color = (120, 120, 140) # Slate gray / Unknown
-                label = "UNREGISTERED FACE"
+                color = (0, 255, 0) # Bright Vibrant Green for all detected student faces
+                label = f"STUDENT DETECTED ({int(face.confidence * 100)}%)"
 
-            # Draw box & banner
+            # 1. Main OpenCV Green Bounding Box
             cv2.rectangle(display_frame, (x, y), (x + fw, y + fh), color, 2)
-            lbl_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.52, 2)
-            cv2.rectangle(display_frame, (x, max(0, y - 24)), (x + lbl_size[0] + 10, y), color, -1)
+
+            # 2. YOLO-style Corner Brackets (Thicker 3px for high-tech optical look)
+            corner_len = max(8, min(fw, fh) // 4)
+            # Top-Left
+            cv2.line(display_frame, (x, y), (x + corner_len, y), (0, 255, 0), 3)
+            cv2.line(display_frame, (x, y), (x, y + corner_len), (0, 255, 0), 3)
+            # Top-Right
+            cv2.line(display_frame, (x + fw, y), (x + fw - corner_len, y), (0, 255, 0), 3)
+            cv2.line(display_frame, (x + fw, y), (x + fw, y + corner_len), (0, 255, 0), 3)
+            # Bottom-Left
+            cv2.line(display_frame, (x, y + fh), (x + corner_len, y + fh), (0, 255, 0), 3)
+            cv2.line(display_frame, (x, y + fh), (x, y + fh - corner_len), (0, 255, 0), 3)
+            # Bottom-Right
+            cv2.line(display_frame, (x + fw, y + fh), (x + fw - corner_len, y + fh), (0, 255, 0), 3)
+            cv2.line(display_frame, (x + fw, y + fh), (x + fw, y + fh - corner_len), (0, 255, 0), 3)
+
+            # 3. Label Tag above box
+            lbl_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.50, 2)
+            cv2.rectangle(display_frame, (x, max(0, y - 24)), (x + lbl_size[0] + 10, y), (15, 23, 42), -1)
+            cv2.rectangle(display_frame, (x, max(0, y - 24)), (x + lbl_size[0] + 10, y), color, 1)
             cv2.putText(display_frame, label, (x + 5, max(14, y - 7)),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.52, (255, 255, 255), 2, cv2.LINE_AA)
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.48, (0, 255, 0), 2, cv2.LINE_AA)
+
+            detected_info.append({
+                "bbox": [int(x), int(y), int(fw), int(fh)],
+                "label": label,
+                "status": status,
+                "confidence": float(confidence or face.confidence)
+            })
+
+        self.last_detected_faces = detected_info
 
         # Telemetry HUD on frame
         cam_name = self.camera_manager.active_camera.name if self.camera_manager.active_camera else "DISCONNECTED"

@@ -307,44 +307,31 @@ export default function CameraSettingsPage() {
             </div>
 
             {/* Mode Switcher Tabs */}
-            <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-2xl mb-5">
+            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl mb-5">
               <button
                 type="button"
                 onClick={() => setActiveTab('WEBCAM')}
-                className={`py-2 px-1 text-center rounded-xl text-xs font-bold transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                className={`py-2 px-2 text-center rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
                   activeTab === 'WEBCAM'
                     ? 'bg-white text-[#FF5A36] shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Video className="w-4 h-4" />
-                <span>Webcam</span>
+                <span>Laptop Web Camera</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab('RTSP')}
-                className={`py-2 px-1 text-center rounded-xl text-xs font-bold transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                className={`py-2 px-2 text-center rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
                   activeTab === 'RTSP'
                     ? 'bg-white text-[#FF5A36] shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 <Radio className="w-4 h-4" />
-                <span>RTSP Camera</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setActiveTab('MOCK')}
-                className={`py-2 px-1 text-center rounded-xl text-xs font-bold transition-all cursor-pointer flex flex-col items-center gap-1 ${
-                  activeTab === 'MOCK'
-                    ? 'bg-white text-[#FF5A36] shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <MonitorCheck className="w-4 h-4" />
-                <span>Simulator</span>
+                <span>Classroom RTSP Camera</span>
               </button>
             </div>
 
@@ -533,50 +520,6 @@ export default function CameraSettingsPage() {
                       <>
                         <Radio className="w-4 h-4" />
                         <span>Connect to RTSP Camera</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: MOCK SIMULATOR */}
-            {activeTab === 'MOCK' && (
-              <div className="space-y-4 text-xs">
-                <div className="p-3 bg-amber-50/90 rounded-2xl border border-amber-200/80 text-amber-800 flex items-start gap-2">
-                  <MonitorCheck className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
-                  <span className="font-semibold text-[11px]">
-                    Use the Classroom Camera Simulator to test attendance workflows, desk positioning, and face matching without needing a physical camera attached.
-                  </span>
-                </div>
-
-                <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-100 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium">Simulation Scene:</span>
-                    <span className="font-bold text-slate-800">Classroom 302 Multi-Desk</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium">Virtual Students:</span>
-                    <span className="font-bold text-emerald-600">Simulated Facial Targets</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 font-medium">Lighting & Glare:</span>
-                    <span className="font-bold text-slate-700">Dynamic Daylight</span>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={handleConnectMock}
-                    disabled={actionLoading}
-                    className="w-full enterprise-btn-primary justify-center text-xs py-3"
-                  >
-                    {actionLoading ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <MonitorCheck className="w-4 h-4" />
-                        <span>Activate Simulation Camera</span>
                       </>
                     )}
                   </button>

@@ -35,16 +35,16 @@ class CameraManager:
         self.active_camera: Optional[BaseCamera] = None
         self.camera_type: str = "WEBCAM"
 
-        # Try initializing with the Laptop Webcam by default, with automatic fallback to MockCamera
+        # Try initializing with the Laptop Webcam by default, with automatic fallback to BrowserIngestCamera
         laptop_cam = WebcamCamera(device_index=0, name="Laptop Integrated Webcam", width=1280, height=720)
         if laptop_cam.start():
             self.active_camera = laptop_cam
             self.camera_type = "WEBCAM"
             print("[CameraManager] Initialized with Laptop Webcam on device index 0.")
         else:
-            print("[CameraManager] Laptop webcam not immediately accessible; initializing with MockCamera.")
-            self.active_camera = MockCamera()
-            self.camera_type = "MOCK"
+            print("[CameraManager] Hardware webcam not directly attached; initializing with Browser Ingest Camera.")
+            self.active_camera = BrowserIngestCamera(name="Integrated Laptop Webcam")
+            self.camera_type = "WEBCAM"
             self.active_camera.start()
 
         self._manager_lock = threading.Lock()
