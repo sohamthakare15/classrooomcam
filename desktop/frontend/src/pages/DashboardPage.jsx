@@ -26,11 +26,12 @@ export default function DashboardPage() {
   const { currentUser } = useAuth();
 
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
-  const [students, setStudents] = useState([]);
-  const [sections, setSections] = useState([]);
+  // Instant cache-first hydration for 0ms dashboard paint
+  const [students, setStudents] = useState(() => storageService.getStudents());
+  const [sections, setSections] = useState(() => storageService.getClasses());
   const [sessions, setSessions] = useState([]);
   const [activeSession, setActiveSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Live clock ticker
   useEffect(() => {
@@ -40,9 +41,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDashboardData();
-    const interval = setInterval(loadDashboardData, 5000);
 
-    // Real-time Firebase RTDB listeners
+    // Real-time Firebase RTDB listeners (no heavy polling needed)
     const unsubStudents = subscribeToStudents((rtdbStudents) => {
       if (Array.isArray(rtdbStudents)) {
         storageService.saveStudents(rtdbStudents);
@@ -50,12 +50,12 @@ export default function DashboardPage() {
       }
     });
     const unsubSections = subscribeToSections((rtdbSections) => {
-      if (Array.isArray(rtdbSections) && rtdbSections.length > 0) {
+      if (Array.isArray(rtdbSections)) {
         setSections(rtdbSections);
       }
     });
     const unsubSessions = subscribeToSessions((rtdbSessions) => {
-      if (Array.isArray(rtdbSessions) && rtdbSessions.length > 0) {
+      if (Array.isArray(rtdbSessions)) {
         setSessions(rtdbSessions);
         const running = rtdbSessions.find(s => s.status === 'in_progress');
         setActiveSession(running || null);
@@ -63,7 +63,6 @@ export default function DashboardPage() {
     });
 
     return () => {
-      clearInterval(interval);
       if (unsubStudents) unsubStudents();
       if (unsubSections) unsubSections();
       if (unsubSessions) unsubSessions();
@@ -72,32 +71,28 @@ export default function DashboardPage() {
 
   const loadDashboardData = async () => {
     try {
-      // 1. Students (merges backend SQLite + Firebase RTDB)
-      const stuList = await storageService.syncFromBackend(apiService);
-      setStudents(stuList);
+      // Parallel fetch for maximum speed
+      const [stuList, secList, sessRes, rtdbSess] = await Promise.all([
+        storageService.syncFromBackend(apiService).catch(() => storageService.getStudents()),
+        storageService.syncSectionsFromBackend(apiService).catch(() => storageService.getClasses()),
+        apiService.getSessions().catch(() => null),
+        fetchSessionsFromRTDB().catch(() => [])
+      ]);
 
-      // 2. Sections (merges backend SQLite + Firebase RTDB)
-      const secList = await storageService.syncSectionsFromBackend(apiService);
-      setSections(secList);
+      if (Array.isArray(stuList)) setStudents(stuList);
+      if (Array.isArray(secList)) setSections(secList);
 
-      // 3. Attendance sessions (merges backend SQLite + Firebase RTDB)
-      try {
-        const [sessRes, rtdbSess] = await Promise.all([
-          apiService.getSessions().catch(() => null),
-          fetchSessionsFromRTDB().catch(() => [])
-        ]);
-        const mergedSess = new Map();
-        if (Array.isArray(rtdbSess)) {
-          rtdbSess.forEach(s => { if (s && s.sessionId) mergedSess.set(s.sessionId, s); });
-        }
-        if (sessRes && Array.isArray(sessRes.sessions)) {
-          sessRes.sessions.forEach(s => { if (s && s.sessionId) mergedSess.set(s.sessionId, s); });
-        }
-        const finalSess = Array.from(mergedSess.values());
-        setSessions(finalSess);
-        const running = finalSess.find(s => s.status === 'in_progress');
-        setActiveSession(running || null);
-      } catch (_) {}
+      const mergedSess = new Map();
+      if (Array.isArray(rtdbSess)) {
+        rtdbSess.forEach(s => { if (s && s.sessionId) mergedSess.set(s.sessionId, s); });
+      }
+      if (sessRes && Array.isArray(sessRes.sessions)) {
+        sessRes.sessions.forEach(s => { if (s && s.sessionId) mergedSess.set(s.sessionId, s); });
+      }
+      const finalSess = Array.from(mergedSess.values());
+      setSessions(finalSess);
+      const running = finalSess.find(s => s.status === 'in_progress');
+      setActiveSession(running || null);
     } catch (err) {
       console.error('Dashboard data load error:', err);
     } finally {
