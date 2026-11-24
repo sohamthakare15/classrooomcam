@@ -23,6 +23,7 @@ import { storageService } from '../services/storageService';
 import {
   subscribeToSessions,
   fetchSessionsFromRTDB,
+  fetchRecordsForSessionFromRTDB,
   deleteSessionFromRTDB,
   clearAllSessionsFromRTDB
 } from '../services/rtdbService';
@@ -122,12 +123,20 @@ export default function AttendanceHistoryPage() {
     setSelectedSession(session);
     setRecordsLoading(true);
     try {
-      const res = await apiService.getSessionDetails(session.sessionId);
-      if (res && res.records) {
-        setSessionRecords(res.records);
+      const [res, rtdbRecords] = await Promise.all([
+        apiService.getSessionDetails(session.sessionId).catch(() => null),
+        fetchRecordsForSessionFromRTDB(session.sessionId).catch(() => [])
+      ]);
+      const merged = new Map();
+      if (Array.isArray(rtdbRecords)) {
+        rtdbRecords.forEach(r => { if (r && r.studentId) merged.set(r.studentId, r); });
       }
+      if (res && Array.isArray(res.records)) {
+        res.records.forEach(r => { if (r && r.studentId) merged.set(r.studentId, r); });
+      }
+      setSessionRecords(Array.from(merged.values()));
     } catch (err) {
-      alert(`Error fetching session records: ${err.message}`);
+      setSessionRecords([]);
     } finally {
       setRecordsLoading(false);
     }
