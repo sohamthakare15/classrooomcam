@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import { storageService } from '../services/storageService';
+import { subscribeToStudents } from '../services/rtdbService';
 import Modal from '../components/Modal';
 
 export default function RecognitionReviewPage() {
@@ -27,10 +28,19 @@ export default function RecognitionReviewPage() {
   const [chosenStudentId, setChosenStudentId] = useState('');
 
   useEffect(() => {
-    setStudents(storageService.getStudents());
+    storageService.syncFromBackend(apiService).then(setStudents).catch(() => setStudents(storageService.getStudents()));
+    const unsub = subscribeToStudents((list) => {
+      if (Array.isArray(list)) {
+        storageService.saveStudents(list);
+        setStudents(list);
+      }
+    });
     loadReviews();
     const interval = setInterval(loadReviews, 3000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (unsub) unsub();
+    };
   }, []);
 
   const loadReviews = async () => {

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { apiService } from '../services/apiService';
+import { subscribeToSettings } from '../services/rtdbService';
 import { useAuth } from '../context/AuthContext';
 
 export default function SettingsPage() {
@@ -44,6 +45,13 @@ export default function SettingsPage() {
   useEffect(() => {
     loadSyncStatus();
     loadUsers();
+    storageService.syncSettingsFromRTDB().then(setSettings);
+    const unsubSettings = subscribeToSettings((rtdbSettings) => {
+      if (rtdbSettings) {
+        setSettings((prev) => ({ ...prev, ...rtdbSettings }));
+      }
+    });
+    return () => { if (unsubSettings) unsubSettings(); };
   }, []);
 
   const loadSyncStatus = async () => {

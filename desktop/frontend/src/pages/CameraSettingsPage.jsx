@@ -26,13 +26,13 @@ export default function CameraSettingsPage() {
   // Active Hardware Status
   const [cameraStatus, setCameraStatus] = useState({
     status: 'CONNECTED',
-    type: 'MOCK',
+    type: 'WEBCAM',
     resolution: '1280x720',
     fps: 30,
     name: 'Integrated Classroom Camera'
   });
 
-  // Selected Configuration Mode Tab: 'WEBCAM' | 'RTSP' | 'MOCK'
+  // Selected Configuration Mode Tab: 'WEBCAM' | 'RTSP'
   const [activeTab, setActiveTab] = useState('WEBCAM');
 
   // Webcam State
@@ -68,8 +68,8 @@ export default function CameraSettingsPage() {
         if (status.type === 'BROWSER' || status.type === 'WEBCAM') {
           setIsBrowserCamActive(true);
         }
-        if (status.type && !['WEBCAM', 'RTSP', 'MOCK'].includes(activeTab)) {
-          setActiveTab(status.type === 'BROWSER' ? 'WEBCAM' : status.type);
+        if (status.type && !['WEBCAM', 'RTSP'].includes(activeTab)) {
+          setActiveTab(status.type === 'RTSP' ? 'RTSP' : 'WEBCAM');
         }
       }
     } catch (_) {}
@@ -145,28 +145,6 @@ export default function CameraSettingsPage() {
     }
   };
 
-  // 3. Connect Classroom Simulation Camera
-  const handleConnectMock = async () => {
-    setActionLoading(true);
-    setIsBrowserCamActive(false);
-    try {
-      const res = await apiService.connectCamera({
-        cameraType: 'MOCK',
-        name: 'Classroom Camera Simulator'
-      });
-      if (res.success) {
-        showFeedback('Switched to Classroom Simulation Test Camera.', 'success');
-        loadCameraStatus();
-      } else {
-        showFeedback(res.error || 'Failed to activate simulation.', 'error');
-      }
-    } catch (err) {
-      showFeedback(err.message || 'Simulation camera error.', 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   // Disconnect Camera
   const handleDisconnect = async () => {
     setActionLoading(true);
@@ -199,7 +177,7 @@ export default function CameraSettingsPage() {
             <span>Camera Modes & Optical View</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Switch between Integrated Laptop Webcams, Classroom RTSP IP Cameras, and Test Simulators.
+            Switch between Integrated Laptop Webcams and Classroom RTSP IP Cameras.
           </p>
         </div>
 
@@ -250,7 +228,6 @@ export default function CameraSettingsPage() {
 
             <div className="rounded-2xl overflow-hidden bg-slate-900 border border-slate-800">
               <CameraFeed
-                isSimulation={cameraStatus.type === 'MOCK'}
                 isBrowserCamera={isBrowserCamActive}
                 height="380px"
               />

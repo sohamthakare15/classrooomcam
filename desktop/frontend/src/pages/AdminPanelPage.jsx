@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/apiService';
+import { subscribeToUsers, syncUserToRTDB, deleteUserFromRTDB } from '../services/rtdbService';
 import { formatKolkataDateTime } from '../utils/dateUtils';
 import Modal from '../components/Modal';
 
@@ -51,6 +52,38 @@ export default function AdminPanelPage() {
 
   useEffect(() => {
     loadUsers();
+
+    // Real-time Firebase RTDB listener so teachers added from phone reflect instantly on laptop
+    const unsubUsers = subscribeToUsers((rtdbUsers) => {
+      if (Array.isArray(rtdbUsers)) {
+        setUsers((prev) => {
+          const merged = new Map();
+          // Keep permanent admin and any existing backend records
+          prev.forEach((u) => {
+            if (u && u.uid) merged.set(u.uid, u);
+          });
+          // Overlay live RTDB updates
+          rtdbUsers.forEach((u) => {
+            if (u && u.uid) merged.set(u.uid, u);
+          });
+          // Remove deleted non-permanent users that are no longer in RTDB if RTDB is populated
+          if (rtdbUsers.length > 0) {
+            const rtdbIds = new Set(rtdbUsers.map((u) => u.uid));
+            for (const [uid, u] of merged.entries()) {
+              if (!u.isPermanent && u.role !== 'admin' && !rtdbIds.has(uid)) {
+                merged.delete(uid);
+              }
+            }
+          }
+          return Array.from(merged.values()).sort((a, b) => (b.isPermanent ? 1 : 0) - (a.isPermanent ? 1 : 0));
+        });
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      if (unsubUsers) unsubUsers();
+    };
   }, []);
 
   const loadUsers = async () => {
@@ -86,8 +119,9 @@ export default function AdminPanelPage() {
       });
 
       if (res && res.user) {
+        await syncUserToRTDB(res.user);
         setStatusMsg({
-          text: `Teacher account created for ${res.user.fullName} (${res.user.email}). Credentials saved to database.`,
+          text: `Teacher account created for ${res.user.fullName} (${res.user.email}). Credentials synced in real-time.`,
           type: 'success'
         });
         setIsAddModalOpen(false);
@@ -118,6 +152,7 @@ export default function AdminPanelPage() {
     if (!userToDelete) return;
     try {
       await apiService.deleteUser(userToDelete.uid);
+      await deleteUserFromRTDB(userToDelete.uid);
       setStatusMsg({
         text: `Faculty account for ${userToDelete.fullName || userToDelete.email} has been permanently removed.`,
         type: 'success'
@@ -392,7 +427,7 @@ export default function AdminPanelPage() {
                 required
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="e.g. rajesh.kumar@school.edu or rajesh"
+                placeholder="e.g. rajesh.kumar@institution.edu or rajesh"
                 className="glass-input w-full pl-9"
               />
             </div>

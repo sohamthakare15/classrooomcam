@@ -381,28 +381,37 @@ export default function AttendanceSessionPage() {
         <div className="glass-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-xs">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
-              <label className="font-bold text-slate-700">Class Standard:</label>
+              <label className="font-bold text-slate-700">Classroom / Course:</label>
               <select
                 value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
+                onChange={(e) => {
+                  const nextClass = e.target.value;
+                  setSelectedClass(nextClass);
+                  const matchingSec = sections.find(s => s.className === nextClass);
+                  if (matchingSec) setSelectedSection(matchingSec.sectionName);
+                }}
                 className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
               >
-                <option value="10">Class 10</option>
-                <option value="11">Class 11</option>
-                <option value="12">Class 12</option>
+                {Array.from(new Set([...sections.map(s => s.className), selectedClass].filter(Boolean))).map(cls => (
+                  <option key={cls} value={cls}>{cls}</option>
+                ))}
               </select>
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="font-bold text-slate-700">Section:</label>
+              <label className="font-bold text-slate-700">Section / Batch:</label>
               <select
                 value={selectedSection}
                 onChange={(e) => setSelectedSection(e.target.value)}
                 className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
               >
-                <option value="A">Section A</option>
-                <option value="B">Section B</option>
-                <option value="Science">Section Science</option>
+                {Array.from(new Set([
+                  ...sections.filter(s => s.className === selectedClass).map(s => s.sectionName),
+                  ...sections.map(s => s.sectionName),
+                  selectedSection
+                ].filter(Boolean))).map(sec => (
+                  <option key={sec} value={sec}>{sec}</option>
+                ))}
               </select>
             </div>
 

@@ -22,6 +22,7 @@ import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import { storageService } from '../services/storageService';
 import { apiService } from '../services/apiService';
+import { subscribeToStudents, subscribeToSections } from '../services/rtdbService';
 
 export default function StudentsPage() {
   const navigate = useNavigate();
@@ -49,6 +50,37 @@ export default function StudentsPage() {
 
   useEffect(() => {
     loadStudentsAndSections();
+
+    // Real-time Firebase RTDB listeners so students added/edited on phone reflect instantly
+    const unsubStudents = subscribeToStudents((rtdbStudents) => {
+      if (Array.isArray(rtdbStudents)) {
+        storageService.saveStudents(rtdbStudents);
+        setStudents(rtdbStudents);
+        setLoading(false);
+      }
+    });
+
+    const unsubSections = subscribeToSections((rtdbSections) => {
+      if (Array.isArray(rtdbSections) && rtdbSections.length > 0) {
+        const mapped = rtdbSections.map(s => ({
+          sectionId: s.sectionId,
+          classId: `${s.className}-${s.sectionName}`,
+          name: s.className,
+          section: s.sectionName,
+          className: s.className,
+          sectionName: s.sectionName,
+          room: s.room || 'Room TBA',
+          studentCount: s.studentCount || 0
+        }));
+        storageService.saveClasses(mapped);
+        setSections(mapped);
+      }
+    });
+
+    return () => {
+      if (unsubStudents) unsubStudents();
+      if (unsubSections) unsubSections();
+    };
   }, []);
 
   const loadStudentsAndSections = async () => {
@@ -338,30 +370,30 @@ export default function StudentsPage() {
           </div>
 
           <div className="flex items-center gap-2 text-xs">
-            <label className="text-slate-600 font-medium">Class:</label>
+            <label className="text-slate-600 font-medium">Class / Course:</label>
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
               className="border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 bg-white font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
             >
-              <option value="ALL">All Classes</option>
-              <option value="10">Class 10</option>
-              <option value="11">Class 11</option>
-              <option value="12">Class 12</option>
+              <option value="ALL">All Classrooms</option>
+              {Array.from(new Set([...sections.map(s => s.className), ...students.map(s => s.class)].filter(Boolean))).map(cls => (
+                <option key={cls} value={cls}>{cls}</option>
+              ))}
             </select>
           </div>
 
           <div className="flex items-center gap-2 text-xs">
-            <label className="text-slate-600 font-medium">Section:</label>
+            <label className="text-slate-600 font-medium">Section / Batch:</label>
             <select
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
               className="border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 bg-white font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
             >
               <option value="ALL">All Sections</option>
-              <option value="A">Section A</option>
-              <option value="B">Section B</option>
-              <option value="Science">Section Science</option>
+              {Array.from(new Set([...sections.map(s => s.sectionName), ...students.map(s => s.section)].filter(Boolean))).map(sec => (
+                <option key={sec} value={sec}>{sec}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -443,27 +475,24 @@ export default function StudentsPage() {
               />
             </div>
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Assigned Section *</label>
+              <label className="block text-slate-700 font-bold mb-1">Assigned Classroom / Section *</label>
               <select
-                value={`${formData.class}-${formData.section}`}
+                value={`${formData.class}|||${formData.section}`}
                 onChange={(e) => {
-                  const [c, s] = e.target.value.split('-');
+                  const [c, s] = e.target.value.split('|||');
                   setFormData({ ...formData, class: c, section: s });
                 }}
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
               >
                 {sections.map(sec => (
-                  <option key={sec.sectionId} value={`${sec.className}-${sec.sectionName}`}>
-                    Class {sec.className}-{sec.sectionName} ({sec.room || 'Room TBA'})
+                  <option key={sec.sectionId} value={`${sec.className}|||${sec.sectionName}`}>
+                    {sec.className} - {sec.sectionName} ({sec.room || 'Room TBA'})
                   </option>
                 ))}
-                {sections.length === 0 && (
-                  <>
-                    <option value="10-A">Class 10-A</option>
-                    <option value="10-B">Class 10-B</option>
-                    <option value="11-Science">Class 11-Science</option>
-                    <option value="12-Science">Class 12-Science</option>
-                  </>
+                {!sections.some(sec => sec.className === formData.class && sec.sectionName === formData.section) && formData.class && (
+                  <option value={`${formData.class}|||${formData.section}`}>
+                    {formData.class} - {formData.section}
+                  </option>
                 )}
               </select>
             </div>
@@ -477,7 +506,7 @@ export default function StudentsPage() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
-                placeholder="student@school.edu"
+                placeholder="student@institution.edu"
               />
             </div>
             <div>

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { apiService } from '../services/apiService';
+import { subscribeToStudents, subscribeToSections, syncSectionToRTDB, deleteSectionFromRTDB } from '../services/rtdbService';
 import Modal from '../components/Modal';
 
 export default function SectionsPage() {
@@ -31,9 +32,9 @@ export default function SectionsPage() {
 
   // Add Section Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newClassName, setNewClassName] = useState('10');
-  const [newSectionName, setNewSectionName] = useState('A');
-  const [newRoom, setNewRoom] = useState('Room 302');
+  const [newClassName, setNewClassName] = useState('');
+  const [newSectionName, setNewSectionName] = useState('');
+  const [newRoom, setNewRoom] = useState('');
 
   // Assign Student Modal
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -43,6 +44,36 @@ export default function SectionsPage() {
 
   useEffect(() => {
     loadData();
+
+    const unsubSections = subscribeToSections((rtdbSections) => {
+      if (Array.isArray(rtdbSections) && rtdbSections.length > 0) {
+        const mapped = rtdbSections.map(s => ({
+          sectionId: s.sectionId,
+          classId: `${s.className}-${s.sectionName}`,
+          name: s.className,
+          section: s.sectionName,
+          className: s.className,
+          sectionName: s.sectionName,
+          room: s.room || 'Room TBA',
+          studentCount: s.studentCount || 0
+        }));
+        storageService.saveClasses(mapped);
+        setSections(mapped);
+        setLoading(false);
+      }
+    });
+
+    const unsubStudents = subscribeToStudents((rtdbStudents) => {
+      if (Array.isArray(rtdbStudents)) {
+        storageService.saveStudents(rtdbStudents);
+        setStudents(rtdbStudents);
+      }
+    });
+
+    return () => {
+      if (unsubSections) unsubSections();
+      if (unsubStudents) unsubStudents();
+    };
   }, []);
 
   const loadData = async () => {
@@ -71,14 +102,19 @@ export default function SectionsPage() {
     }
 
     try {
-      await apiService.createSection({
+      const res = await apiService.createSection({
         className: newClassName.trim(),
         sectionName: newSectionName.trim(),
         room: newRoom.trim()
       });
-      setStatusMsg({ text: `Section Class ${newClassName}-${newSectionName} saved successfully!`, type: 'success' });
+      if (res && res.section) {
+        await syncSectionToRTDB(res.section);
+      }
+      setStatusMsg({ text: `Section ${newClassName}-${newSectionName} saved successfully!`, type: 'success' });
       setIsAddModalOpen(false);
+      setNewClassName('');
       setNewSectionName('');
+      setNewRoom('');
       loadData();
       setTimeout(() => setStatusMsg({ text: '', type: '' }), 4000);
     } catch (err) {
@@ -97,6 +133,7 @@ export default function SectionsPage() {
 
     try {
       await apiService.deleteSection(sec.sectionId);
+      await deleteSectionFromRTDB(sec.sectionId);
       setStatusMsg({ text: `Section deleted.`, type: 'success' });
       loadData();
       setTimeout(() => setStatusMsg({ text: '', type: '' }), 4000);
@@ -420,16 +457,31 @@ export default function SectionsPage() {
       >
         <form onSubmit={handleCreateSection} className="space-y-4 text-xs">
           <div>
-            <label className="block text-slate-700 font-bold mb-1">Class Standard / Year *</label>
-            <select
+            <label className="block text-slate-700 font-bold mb-1">Classroom / Course / Year *</label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. B.Tech CSE, BCA Sem 2, Class 10, MBA, Batch A"
               value={newClassName}
               onChange={(e) => setNewClassName(e.target.value)}
               className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
-            >
-              <option value="10">Class 10</option>
-              <option value="11">Class 11</option>
-              <option value="12">Class 12</option>
-            </select>
+            />
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {['B.Tech CSE', 'BCA', 'MCA', 'MBA', 'Class 10', 'Class 12', 'Batch A'].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setNewClassName(preset)}
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
+                    newClassName === preset
+                      ? 'bg-[#FFF2EE] text-[#FF5A36] border-[#FFD9CE]'
+                      : 'bg-slate-50 text-slate-500 border-slate-200 hover:text-slate-800 hover:bg-slate-100'
+                  }`}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -487,28 +539,28 @@ export default function SectionsPage() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Target Class *</label>
+              <label className="block text-slate-700 font-bold mb-1">Target Classroom / Course *</label>
               <select
                 value={assignTargetClass}
                 onChange={(e) => setAssignTargetClass(e.target.value)}
                 className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
               >
-                <option value="10">Class 10</option>
-                <option value="11">Class 11</option>
-                <option value="12">Class 12</option>
+                {Array.from(new Set([...sections.map(s => s.className), assignTargetClass].filter(Boolean))).map(cls => (
+                  <option key={cls} value={cls}>{cls}</option>
+                ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-slate-700 font-bold mb-1">Target Section *</label>
+              <label className="block text-slate-700 font-bold mb-1">Target Section / Batch *</label>
               <select
                 value={assignTargetSection}
                 onChange={(e) => setAssignTargetSection(e.target.value)}
                 className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
               >
-                <option value="A">Section A</option>
-                <option value="B">Section B</option>
-                <option value="Science">Section Science</option>
+                {Array.from(new Set([...sections.filter(s => s.className === assignTargetClass).map(s => s.sectionName), assignTargetSection].filter(Boolean))).map(sec => (
+                  <option key={sec} value={sec}>{sec}</option>
+                ))}
               </select>
             </div>
           </div>

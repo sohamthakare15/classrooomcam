@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { storageService } from '../services/storageService';
 import { apiService } from '../services/apiService';
+import { subscribeToStudents, subscribeToSections, subscribeToSessions, fetchSessionsFromRTDB } from '../services/rtdbService';
 import { formatKolkataDate, formatKolkataTime } from '../utils/dateUtils';
 
 export default function DashboardPage() {
@@ -39,38 +40,63 @@ export default function DashboardPage() {
 
   useEffect(() => {
     loadDashboardData();
-    const interval = setInterval(loadDashboardData, 3000);
-    return () => clearInterval(interval);
+    const interval = setInterval(loadDashboardData, 5000);
+
+    // Real-time Firebase RTDB listeners
+    const unsubStudents = subscribeToStudents((rtdbStudents) => {
+      if (Array.isArray(rtdbStudents)) {
+        storageService.saveStudents(rtdbStudents);
+        setStudents(rtdbStudents);
+      }
+    });
+    const unsubSections = subscribeToSections((rtdbSections) => {
+      if (Array.isArray(rtdbSections) && rtdbSections.length > 0) {
+        setSections(rtdbSections);
+      }
+    });
+    const unsubSessions = subscribeToSessions((rtdbSessions) => {
+      if (Array.isArray(rtdbSessions) && rtdbSessions.length > 0) {
+        setSessions(rtdbSessions);
+        const running = rtdbSessions.find(s => s.status === 'in_progress');
+        setActiveSession(running || null);
+      }
+    });
+
+    return () => {
+      clearInterval(interval);
+      if (unsubStudents) unsubStudents();
+      if (unsubSections) unsubSections();
+      if (unsubSessions) unsubSessions();
+    };
   }, []);
 
   const loadDashboardData = async () => {
     try {
-      // 1. Students
-      try {
-        const dbStudents = await storageService.fetchStudentsFromDb();
-        setStudents(dbStudents && dbStudents.length > 0 ? dbStudents : storageService.getStudents());
-      } catch (_) {
-        setStudents(storageService.getStudents());
-      }
+      // 1. Students (merges backend SQLite + Firebase RTDB)
+      const stuList = await storageService.syncFromBackend(apiService);
+      setStudents(stuList);
 
-      // 2. Sections
-      try {
-        const secRes = await apiService.getSections();
-        if (secRes && secRes.sections) {
-          setSections(secRes.sections);
-        }
-      } catch (_) {
-        setSections(storageService.getSections());
-      }
+      // 2. Sections (merges backend SQLite + Firebase RTDB)
+      const secList = await storageService.syncSectionsFromBackend(apiService);
+      setSections(secList);
 
-      // 3. Attendance sessions
+      // 3. Attendance sessions (merges backend SQLite + Firebase RTDB)
       try {
-        const sessRes = await apiService.getSessions();
-        if (sessRes && sessRes.sessions) {
-          setSessions(sessRes.sessions);
-          const running = sessRes.sessions.find(s => s.status === 'in_progress');
-          setActiveSession(running || null);
+        const [sessRes, rtdbSess] = await Promise.all([
+          apiService.getSessions().catch(() => null),
+          fetchSessionsFromRTDB().catch(() => [])
+        ]);
+        const mergedSess = new Map();
+        if (Array.isArray(rtdbSess)) {
+          rtdbSess.forEach(s => { if (s && s.sessionId) mergedSess.set(s.sessionId, s); });
         }
+        if (sessRes && Array.isArray(sessRes.sessions)) {
+          sessRes.sessions.forEach(s => { if (s && s.sessionId) mergedSess.set(s.sessionId, s); });
+        }
+        const finalSess = Array.from(mergedSess.values());
+        setSessions(finalSess);
+        const running = finalSess.find(s => s.status === 'in_progress');
+        setActiveSession(running || null);
       } catch (_) {}
     } catch (err) {
       console.error('Dashboard data load error:', err);

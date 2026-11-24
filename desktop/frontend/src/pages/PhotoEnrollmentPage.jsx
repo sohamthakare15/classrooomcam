@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { apiService } from '../services/apiService';
+import { subscribeToStudents } from '../services/rtdbService';
 
 export default function PhotoEnrollmentPage() {
   const [searchParams] = useSearchParams();
@@ -35,18 +36,31 @@ export default function PhotoEnrollmentPage() {
   const [isSnapping, setIsSnapping] = useState(false);
 
   useEffect(() => {
-    const list = storageService.getStudents();
-    setStudents(list);
-    if (initialStudentId) {
-      const found = list.find(s => s.studentId === initialStudentId);
-      if (found) {
-        setSelectedStudentId(found.studentId);
-        setSelectedStudent(found);
+    const applyList = (list) => {
+      setStudents(list);
+      if (initialStudentId) {
+        const found = list.find(s => s.studentId === initialStudentId);
+        if (found) {
+          setSelectedStudentId(found.studentId);
+          setSelectedStudent(found);
+        }
+      } else if (list.length > 0 && !selectedStudentId) {
+        setSelectedStudentId(list[0].studentId);
+        setSelectedStudent(list[0]);
       }
-    } else if (list.length > 0) {
-      setSelectedStudentId(list[0].studentId);
-      setSelectedStudent(list[0]);
-    }
+    };
+
+    storageService.syncFromBackend(apiService).then(applyList).catch(() => {
+      applyList(storageService.getStudents());
+    });
+
+    const unsub = subscribeToStudents((rtdbList) => {
+      if (Array.isArray(rtdbList)) {
+        storageService.saveStudents(rtdbList);
+        applyList(rtdbList);
+      }
+    });
+    return () => { if (unsub) unsub(); };
   }, [initialStudentId]);
 
   const handleStudentChange = (sId) => {

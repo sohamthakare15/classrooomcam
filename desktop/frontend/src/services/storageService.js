@@ -5,10 +5,15 @@
 import {
   syncStudentToRTDB,
   fetchStudentsFromRTDB,
+  deleteStudentFromRTDB,
+  fetchSectionsFromRTDB,
+  syncSettingsToRTDB,
+  fetchSettingsFromRTDB,
   syncSessionToRTDB,
   syncRecordToRTDB,
   syncAuditLogToRTDB
 } from './rtdbService';
+import { cryptoService } from './cryptoService';
 
 const STORAGE_KEYS = {
   STUDENTS: 'smartclassroom_students',
@@ -17,45 +22,57 @@ const STORAGE_KEYS = {
   USER: 'smartclassroom_active_user'
 };
 
-const INITIAL_CLASSES = [
-  { sectionId: "sec_10_a", classId: "10-A", name: "10", section: "A", className: "10", sectionName: "A", room: "Room 302", studentCount: 0 },
-  { sectionId: "sec_10_b", classId: "10-B", name: "10", section: "B", className: "10", sectionName: "B", room: "Room 304", studentCount: 0 },
-  { sectionId: "sec_11_sci", classId: "11-Sci", name: "11", section: "Science", className: "11", sectionName: "Science", room: "Lab 1", studentCount: 0 },
-  { sectionId: "sec_12_sci", classId: "12-Sci", name: "12", section: "Science", className: "12", sectionName: "Science", room: "Lab 2", studentCount: 0 }
-];
+const INITIAL_CLASSES = [];
 
 export const storageService = {
-  // Synchronous Students (Local Cache)
+  // Synchronous Students (Encrypted Local Cache)
   getStudents() {
-    const raw = localStorage.getItem(STORAGE_KEYS.STUDENTS);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify([]));
+    const parsed = cryptoService.getEncryptedItem(STORAGE_KEYS.STUDENTS, null);
+    if (!parsed) {
+      cryptoService.setEncryptedItem(STORAGE_KEYS.STUDENTS, []);
       return [];
     }
-    try {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (_) {
-      return [];
-    }
+    return Array.isArray(parsed) ? parsed : [];
   },
 
   clearAllStudents() {
-    localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify([]));
+    cryptoService.setEncryptedItem(STORAGE_KEYS.STUDENTS, []);
     return [];
   },
 
   saveStudents(students) {
-    localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students));
+    cryptoService.setEncryptedItem(STORAGE_KEYS.STUDENTS, students);
   },
 
-  // Synchronize with SQLite Backend
+  // Synchronize with SQLite Backend & Firebase RTDB
   async syncFromBackend(apiService) {
     try {
-      const res = await apiService.getDbStudents();
-      if (res && Array.isArray(res.students)) {
-        this.saveStudents(res.students);
-        return res.students;
+      const [backendRes, rtdbStudents] = await Promise.all([
+        apiService.getDbStudents().catch(() => null),
+        fetchStudentsFromRTDB().catch(() => null)
+      ]);
+
+      const mergedMap = new Map();
+      // 1. Load from RTDB first (cloud source of truth)
+      if (Array.isArray(rtdbStudents)) {
+        rtdbStudents.forEach(s => {
+          if (s && s.studentId) mergedMap.set(s.studentId, s);
+        });
+      }
+      // 2. Merge with backend SQLite
+      if (backendRes && Array.isArray(backendRes.students)) {
+        backendRes.students.forEach(s => {
+          if (s && s.studentId) {
+            const existing = mergedMap.get(s.studentId);
+            mergedMap.set(s.studentId, existing ? { ...existing, ...s } : s);
+          }
+        });
+      }
+
+      if (mergedMap.size > 0 || (Array.isArray(rtdbStudents) && rtdbStudents.length === 0 && backendRes && Array.isArray(backendRes.students) && backendRes.students.length === 0)) {
+        const mergedList = Array.from(mergedMap.values());
+        this.saveStudents(mergedList);
+        return mergedList;
       }
     } catch (_) {}
     return this.getStudents();
@@ -166,6 +183,7 @@ export const storageService = {
     const students = this.getStudents();
     const filtered = students.filter(s => s.studentId !== studentId);
     this.saveStudents(filtered);
+    try { deleteStudentFromRTDB(studentId); } catch (_) {}
     return true;
   },
 
@@ -176,37 +194,61 @@ export const storageService = {
 
   // Sections
   getClasses() {
-    const raw = localStorage.getItem(STORAGE_KEYS.CLASSES);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEYS.CLASSES, JSON.stringify(INITIAL_CLASSES));
+    const parsed = cryptoService.getEncryptedItem(STORAGE_KEYS.CLASSES, null);
+    if (!parsed) {
+      cryptoService.setEncryptedItem(STORAGE_KEYS.CLASSES, INITIAL_CLASSES);
       return INITIAL_CLASSES;
     }
-    try {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_CLASSES;
-    } catch (_) {
-      return INITIAL_CLASSES;
-    }
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_CLASSES;
   },
 
   saveClasses(classes) {
-    localStorage.setItem(STORAGE_KEYS.CLASSES, JSON.stringify(classes));
+    cryptoService.setEncryptedItem(STORAGE_KEYS.CLASSES, classes);
   },
 
   async syncSectionsFromBackend(apiService) {
     try {
-      const res = await apiService.getSections();
+      const [res, rtdbSections] = await Promise.all([
+        apiService.getSections().catch(() => null),
+        fetchSectionsFromRTDB().catch(() => null)
+      ]);
+
+      const mergedMap = new Map();
+      if (Array.isArray(rtdbSections)) {
+        rtdbSections.forEach(s => {
+          if (s && s.sectionId) {
+            mergedMap.set(s.sectionId, {
+              sectionId: s.sectionId,
+              classId: `${s.className}-${s.sectionName}`,
+              name: s.className,
+              section: s.sectionName,
+              className: s.className,
+              sectionName: s.sectionName,
+              room: s.room || 'Room TBA',
+              studentCount: s.studentCount || 0
+            });
+          }
+        });
+      }
       if (res && Array.isArray(res.sections)) {
-        const mapped = res.sections.map(s => ({
-          sectionId: s.sectionId,
-          classId: `${s.className}-${s.sectionName}`,
-          name: s.className,
-          section: s.sectionName,
-          className: s.className,
-          sectionName: s.sectionName,
-          room: s.room || 'Room TBA',
-          studentCount: s.studentCount || 0
-        }));
+        res.sections.forEach(s => {
+          if (s && s.sectionId) {
+            mergedMap.set(s.sectionId, {
+              sectionId: s.sectionId,
+              classId: `${s.className}-${s.sectionName}`,
+              name: s.className,
+              section: s.sectionName,
+              className: s.className,
+              sectionName: s.sectionName,
+              room: s.room || 'Room TBA',
+              studentCount: s.studentCount || 0
+            });
+          }
+        });
+      }
+
+      if (mergedMap.size > 0 || (Array.isArray(rtdbSections) && rtdbSections.length === 0 && res && Array.isArray(res.sections) && res.sections.length === 0)) {
+        const mapped = Array.from(mergedMap.values());
         this.saveClasses(mapped);
         return mapped;
       }
@@ -216,9 +258,8 @@ export const storageService = {
 
   // Settings
   getSettings() {
-    const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
     const defaults = {
-      institutionName: "Greenwood International Academy",
+      institutionName: "SmartClass Institution",
       academicYear: "2026-2027",
       cameraType: "WEBCAM",
       rtspUrl: "",
@@ -230,15 +271,25 @@ export const storageService = {
       esp32Enabled: false,
       esp32Ip: "192.168.1.180"
     };
-    if (!raw) return defaults;
-    try {
-      return { ...defaults, ...JSON.parse(raw) };
-    } catch (_) {
-      return defaults;
-    }
+    const parsed = cryptoService.getEncryptedItem(STORAGE_KEYS.SETTINGS, null);
+    if (!parsed) return defaults;
+    return { ...defaults, ...parsed };
   },
 
   saveSettings(settings) {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+    cryptoService.setEncryptedItem(STORAGE_KEYS.SETTINGS, settings);
+    try { syncSettingsToRTDB(settings); } catch (_) {}
+  },
+
+  async syncSettingsFromRTDB() {
+    try {
+      const rtdbSettings = await fetchSettingsFromRTDB();
+      if (rtdbSettings) {
+        const merged = { ...this.getSettings(), ...rtdbSettings };
+        cryptoService.setEncryptedItem(STORAGE_KEYS.SETTINGS, merged);
+        return merged;
+      }
+    } catch (_) {}
+    return this.getSettings();
   }
 };

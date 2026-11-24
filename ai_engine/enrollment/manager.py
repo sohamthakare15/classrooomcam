@@ -217,6 +217,18 @@ class EnrollmentManager:
         # Update in-memory cache
         self.enrolled_cache[student_id] = avg_embedding
 
+        # Sync encrypted face template to Firebase RTDB so enrollments persist securely across restarts
+        try:
+            import base64
+            self.sync_queue.enqueue_operation("face_templates", student_id, "SET", {
+                "studentId": student_id,
+                "encryptedEmbedding": base64.b64encode(encrypted_bytes).decode("utf-8"),
+                "status": EnrollmentStatus.ENROLLED,
+                "updatedAt": os.path.getmtime(template_file) if os.path.exists(template_file) else 0
+            })
+        except Exception as e:
+            print(f"[EnrollmentManager] RTDB template sync warning: {e}")
+
         # Save local enrollment metadata
         meta = {
             "student_id": student_id,
@@ -252,28 +264,46 @@ class EnrollmentManager:
         if student_id in self.enrolled_cache:
             del self.enrolled_cache[student_id]
 
-        # Delete photo from SQLite database
+        # Delete photo from SQLite database & template from RTDB
         self.sync_queue.delete_student_photo(student_id)
+        try:
+            self.sync_queue.enqueue_operation("face_templates", student_id, "DELETE", {"studentId": student_id})
+        except Exception:
+            pass
 
         return True
 
     def load_all_templates(self):
-        """Decrypts and loads all local templates into in-memory dictionary."""
+        """Decrypts local templates and hydrates any missing templates from Firebase RTDB."""
         self.enrolled_cache.clear()
-        if not os.path.exists(self.templates_dir):
-            return
+        if os.path.exists(self.templates_dir):
+            for fname in os.listdir(self.templates_dir):
+                if fname.endswith(".enc"):
+                    student_id = fname[:-4]
+                    path = os.path.join(self.templates_dir, fname)
+                    try:
+                        with open(path, "rb") as f:
+                            enc_data = f.read()
+                        embedding = self.vault.decrypt_embedding(enc_data)
+                        self.enrolled_cache[student_id] = embedding
+                    except Exception as e:
+                        print(f"Failed to decrypt template for {student_id}: {e}")
 
-        for fname in os.listdir(self.templates_dir):
-            if fname.endswith(".enc"):
-                student_id = fname[:-4]
-                path = os.path.join(self.templates_dir, fname)
-                try:
-                    with open(path, "rb") as f:
-                        enc_data = f.read()
-                    embedding = self.vault.decrypt_embedding(enc_data)
-                    self.enrolled_cache[student_id] = embedding
-                except Exception as e:
-                    print(f"Failed to decrypt template for {student_id}: {e}")
+        # Hydrate any missing templates from Firebase RTDB (decrypting Fernet-encrypted embeddings)
+        try:
+            import base64
+            rtdb_templates = self.sync_queue._rtdb_fetch("face_templates")
+            if rtdb_templates:
+                for stu_id, t_data in rtdb_templates.items():
+                    if not isinstance(t_data, dict) or stu_id in self.enrolled_cache:
+                        continue
+                    if t_data.get("encryptedEmbedding"):
+                        enc_bytes = base64.b64decode(t_data["encryptedEmbedding"])
+                        self.enrolled_cache[stu_id] = self.vault.decrypt_embedding(enc_bytes)
+                    elif t_data.get("embedding"):
+                        self.enrolled_cache[stu_id] = np.array(t_data["embedding"], dtype=np.float32)
+        except Exception as e:
+            print(f"[EnrollmentManager] RTDB template hydration warning: {e}")
 
         print(f"[EnrollmentManager] Loaded {len(self.enrolled_cache)} enrolled face templates into memory.")
 

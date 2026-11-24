@@ -16,9 +16,11 @@ import DataTable from '../components/DataTable';
 import PrintableRegister from '../components/PrintableRegister';
 import { storageService } from '../services/storageService';
 import { apiService } from '../services/apiService';
+import { subscribeToStudents, subscribeToSections } from '../services/rtdbService';
 
 export default function ReportsPage() {
   const [students, setStudents] = useState([]);
+  const [sections, setSections] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,19 +31,36 @@ export default function ReportsPage() {
   const [selectedSessionId, setSelectedSessionId] = useState('');
 
   // Filters
-  const [selectedClass, setSelectedClass] = useState('10');
-  const [selectedSection, setSelectedSection] = useState('A');
+  const [selectedClass, setSelectedClass] = useState('ALL');
+  const [selectedSection, setSelectedSection] = useState('ALL');
   const [reportType, setReportType] = useState('STUDENT_WISE'); // 'STUDENT_WISE', 'ABSENT_ONLY'
 
   useEffect(() => {
     loadAllData();
+    const unsubStu = subscribeToStudents((list) => {
+      if (Array.isArray(list)) {
+        storageService.saveStudents(list);
+        setStudents(list);
+      }
+    });
+    const unsubSec = subscribeToSections((list) => {
+      if (Array.isArray(list) && list.length > 0) setSections(list);
+    });
+    return () => {
+      if (unsubStu) unsubStu();
+      if (unsubSec) unsubSec();
+    };
   }, []);
 
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const stuList = storageService.getStudents();
+      const [stuList, secList] = await Promise.all([
+        storageService.syncFromBackend(apiService),
+        storageService.syncSectionsFromBackend(apiService)
+      ]);
       setStudents(stuList);
+      setSections(secList);
 
       const [sessRes, recRes] = await Promise.allSettled([
         apiService.getSessions(),
@@ -272,30 +291,30 @@ export default function ReportsPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="font-semibold text-slate-700">Class:</label>
+                <label className="font-semibold text-slate-700">Class / Course:</label>
                 <select
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
                   className="border border-slate-200 rounded px-2.5 py-1.5 bg-white text-slate-800"
                 >
-                  <option value="ALL">All Classes</option>
-                  <option value="10">Class 10</option>
-                  <option value="11">Class 11</option>
-                  <option value="12">Class 12</option>
+                  <option value="ALL">All Classrooms</option>
+                  {Array.from(new Set([...sections.map(s => s.className), ...students.map(s => s.class)].filter(Boolean))).map(cls => (
+                    <option key={cls} value={cls}>{cls}</option>
+                  ))}
                 </select>
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="font-semibold text-slate-700">Section:</label>
+                <label className="font-semibold text-slate-700">Section / Batch:</label>
                 <select
                   value={selectedSection}
                   onChange={(e) => setSelectedSection(e.target.value)}
                   className="border border-slate-200 rounded px-2.5 py-1.5 bg-white text-slate-800"
                 >
                   <option value="ALL">All Sections</option>
-                  <option value="A">Section A</option>
-                  <option value="B">Section B</option>
-                  <option value="Science">Section Science</option>
+                  {Array.from(new Set([...sections.map(s => s.sectionName), ...students.map(s => s.section)].filter(Boolean))).map(sec => (
+                    <option key={sec} value={sec}>{sec}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -345,28 +364,30 @@ export default function ReportsPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="font-bold text-slate-700">Class:</label>
+                <label className="font-bold text-slate-700">Class / Course:</label>
                 <select
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
                   className="border border-slate-200 rounded px-2.5 py-1 bg-white text-slate-800 font-medium"
                 >
-                  <option value="10">Class 10</option>
-                  <option value="11">Class 11</option>
-                  <option value="12">Class 12</option>
+                  <option value="ALL">All</option>
+                  {Array.from(new Set([...sections.map(s => s.className), ...students.map(s => s.class)].filter(Boolean))).map(cls => (
+                    <option key={cls} value={cls}>{cls}</option>
+                  ))}
                 </select>
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="font-bold text-slate-700">Section:</label>
+                <label className="font-bold text-slate-700">Section / Batch:</label>
                 <select
                   value={selectedSection}
                   onChange={(e) => setSelectedSection(e.target.value)}
                   className="border border-slate-200 rounded px-2.5 py-1 bg-white text-slate-800 font-medium"
                 >
-                  <option value="A">Section A</option>
-                  <option value="B">Section B</option>
-                  <option value="Science">Section Science</option>
+                  <option value="ALL">All</option>
+                  {Array.from(new Set([...sections.map(s => s.sectionName), ...students.map(s => s.section)].filter(Boolean))).map(sec => (
+                    <option key={sec} value={sec}>{sec}</option>
+                  ))}
                 </select>
               </div>
 

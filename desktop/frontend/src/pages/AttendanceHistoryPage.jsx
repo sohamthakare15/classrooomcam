@@ -20,6 +20,7 @@ import Modal from '../components/Modal';
 import PrintableRegister from '../components/PrintableRegister';
 import { apiService } from '../services/apiService';
 import { storageService } from '../services/storageService';
+import { subscribeToSessions, fetchSessionsFromRTDB } from '../services/rtdbService';
 import { formatKolkataDate } from '../utils/dateUtils';
 
 export default function AttendanceHistoryPage() {
@@ -39,17 +40,40 @@ export default function AttendanceHistoryPage() {
 
   useEffect(() => {
     loadData();
+
+    const unsubSessions = subscribeToSessions((rtdbSessions) => {
+      if (Array.isArray(rtdbSessions) && rtdbSessions.length > 0) {
+        setSessions((prev) => {
+          const merged = new Map();
+          prev.forEach(s => { if (s && s.sessionId) merged.set(s.sessionId, s); });
+          rtdbSessions.forEach(s => { if (s && s.sessionId) merged.set(s.sessionId, s); });
+          return Array.from(merged.values());
+        });
+      }
+    });
+
+    return () => {
+      if (unsubSessions) unsubSessions();
+    };
   }, []);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [sessRes, stuRes, secRes] = await Promise.all([
-        apiService.getSessions(),
+      const [sessRes, rtdbSess, stuRes, secRes] = await Promise.all([
+        apiService.getSessions().catch(() => null),
+        fetchSessionsFromRTDB().catch(() => []),
         storageService.syncFromBackend(apiService),
         storageService.syncSectionsFromBackend(apiService)
       ]);
-      if (sessRes && sessRes.sessions) setSessions(sessRes.sessions);
+      const mergedSess = new Map();
+      if (Array.isArray(rtdbSess)) {
+        rtdbSess.forEach(s => { if (s && s.sessionId) mergedSess.set(s.sessionId, s); });
+      }
+      if (sessRes && Array.isArray(sessRes.sessions)) {
+        sessRes.sessions.forEach(s => { if (s && s.sessionId) mergedSess.set(s.sessionId, s); });
+      }
+      setSessions(Array.from(mergedSess.values()));
       setStudents(stuRes);
       setSections(secRes);
     } catch (_) {

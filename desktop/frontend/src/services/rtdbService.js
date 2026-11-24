@@ -9,10 +9,21 @@ import {
   ref,
   set,
   get,
+  remove,
   update,
   child,
   onValue
 } from 'firebase/database';
+import { cryptoService } from './cryptoService';
+
+function decryptStudentFields(s) {
+  if (!s || typeof s !== 'object') return s;
+  return {
+    ...s,
+    email: cryptoService.decryptString(s.email || ''),
+    contactNumber: cryptoService.decryptString(s.contactNumber || '')
+  };
+}
 
 export const rtdbConfig = {
   databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://classroomcam-1b81d-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -50,6 +61,8 @@ export async function syncStudentToRTDB(student) {
     const studentRef = ref(database, `students/${student.studentId}`);
     await set(studentRef, {
       ...cleanStudent,
+      email: cryptoService.encryptString(cleanStudent.email || ''),
+      contactNumber: cryptoService.encryptString(cleanStudent.contactNumber || ''),
       updatedAt: Date.now()
     });
     return true;
@@ -66,13 +79,216 @@ export async function fetchStudentsFromRTDB() {
     const snapshot = await get(studentsRef);
     if (snapshot.exists()) {
       const val = snapshot.val();
-      return Object.values(val);
+      return Object.values(val).map(decryptStudentFields);
     }
     return [];
   } catch (err) {
     console.warn('[RTDB] Failed to fetch students:', err.message);
     return null;
   }
+}
+
+export async function deleteStudentFromRTDB(studentId) {
+  if (!database || !isConfigured) return false;
+  try {
+    await remove(ref(database, `students/${studentId}`));
+    return true;
+  } catch (err) {
+    console.warn('[RTDB] Failed to delete student:', err.message);
+    return false;
+  }
+}
+
+export function subscribeToStudents(callback) {
+  if (!database || !isConfigured) return () => {};
+  const studentsRef = ref(database, 'students');
+  return onValue(studentsRef, (snapshot) => {
+    if (snapshot.exists()) {
+      callback(Object.values(snapshot.val()).map(decryptStudentFields));
+    } else {
+      callback([]);
+    }
+  }, (err) => {
+    console.warn('[RTDB] Students listener error:', err.message);
+  });
+}
+
+// --- FACULTY & USERS ---
+
+export async function syncUserToRTDB(user) {
+  if (!database || !isConfigured || !user?.uid) return false;
+  try {
+    const cleanUser = { ...user };
+    delete cleanUser.password;
+    await set(ref(database, `faculty_users/${user.uid}`), {
+      ...cleanUser,
+      updatedAt: Date.now()
+    });
+    return true;
+  } catch (err) {
+    console.warn('[RTDB] Failed to sync user:', err.message);
+    return false;
+  }
+}
+
+export async function fetchUsersFromRTDB() {
+  if (!database || !isConfigured) return null;
+  try {
+    const snapshot = await get(ref(database, 'faculty_users'));
+    if (snapshot.exists()) {
+      return Object.values(snapshot.val());
+    }
+    return [];
+  } catch (err) {
+    console.warn('[RTDB] Failed to fetch users:', err.message);
+    return null;
+  }
+}
+
+export async function deleteUserFromRTDB(uid) {
+  if (!database || !isConfigured || !uid) return false;
+  try {
+    await remove(ref(database, `faculty_users/${uid}`));
+    return true;
+  } catch (err) {
+    console.warn('[RTDB] Failed to delete user:', err.message);
+    return false;
+  }
+}
+
+export function subscribeToUsers(callback) {
+  if (!database || !isConfigured) return () => {};
+  const usersRef = ref(database, 'faculty_users');
+  return onValue(usersRef, (snapshot) => {
+    if (snapshot.exists()) {
+      callback(Object.values(snapshot.val()));
+    } else {
+      callback([]);
+    }
+  }, (err) => {
+    console.warn('[RTDB] Users listener error:', err.message);
+  });
+}
+
+// --- SECTIONS ---
+
+export async function syncSectionToRTDB(section) {
+  if (!database || !isConfigured || !section?.sectionId) return false;
+  try {
+    await set(ref(database, `sections/${section.sectionId}`), {
+      ...section,
+      updatedAt: Date.now()
+    });
+    return true;
+  } catch (err) {
+    console.warn('[RTDB] Failed to sync section:', err.message);
+    return false;
+  }
+}
+
+export async function fetchSectionsFromRTDB() {
+  if (!database || !isConfigured) return null;
+  try {
+    const snapshot = await get(ref(database, 'sections'));
+    if (snapshot.exists()) {
+      return Object.values(snapshot.val());
+    }
+    return [];
+  } catch (err) {
+    console.warn('[RTDB] Failed to fetch sections:', err.message);
+    return null;
+  }
+}
+
+export async function deleteSectionFromRTDB(sectionId) {
+  if (!database || !isConfigured || !sectionId) return false;
+  try {
+    await remove(ref(database, `sections/${sectionId}`));
+    return true;
+  } catch (err) {
+    console.warn('[RTDB] Failed to delete section:', err.message);
+    return false;
+  }
+}
+
+export function subscribeToSections(callback) {
+  if (!database || !isConfigured) return () => {};
+  const sectionsRef = ref(database, 'sections');
+  return onValue(sectionsRef, (snapshot) => {
+    if (snapshot.exists()) {
+      callback(Object.values(snapshot.val()));
+    } else {
+      callback([]);
+    }
+  }, (err) => {
+    console.warn('[RTDB] Sections listener error:', err.message);
+  });
+}
+
+export function subscribeToSessions(callback) {
+  if (!database || !isConfigured) return () => {};
+  const sessionsRef = ref(database, 'attendance_sessions');
+  return onValue(sessionsRef, (snapshot) => {
+    if (snapshot.exists()) {
+      callback(Object.values(snapshot.val()));
+    } else {
+      callback([]);
+    }
+  }, (err) => {
+    console.warn('[RTDB] Sessions listener error:', err.message);
+  });
+}
+
+// --- INSTITUTION SETTINGS ---
+
+export async function syncSettingsToRTDB(settings) {
+  if (!database || !isConfigured) return false;
+  try {
+    await set(ref(database, 'institution_settings'), {
+      encryptedPayload: cryptoService.encryptJson(settings),
+      updatedAt: Date.now()
+    });
+    return true;
+  } catch (err) {
+    console.warn('[RTDB] Failed to sync settings:', err.message);
+    return false;
+  }
+}
+
+export async function fetchSettingsFromRTDB() {
+  if (!database || !isConfigured) return null;
+  try {
+    const snapshot = await get(ref(database, 'institution_settings'));
+    if (snapshot.exists()) {
+      const val = snapshot.val();
+      if (val?.encryptedPayload) {
+        return cryptoService.decryptJson(val.encryptedPayload, null);
+      }
+      return val;
+    }
+    return null;
+  } catch (err) {
+    console.warn('[RTDB] Failed to fetch settings:', err.message);
+    return null;
+  }
+}
+
+export function subscribeToSettings(callback) {
+  if (!database || !isConfigured) return () => {};
+  const settingsRef = ref(database, 'institution_settings');
+  return onValue(settingsRef, (snapshot) => {
+    if (snapshot.exists()) {
+      const val = snapshot.val();
+      if (val?.encryptedPayload) {
+        const dec = cryptoService.decryptJson(val.encryptedPayload, null);
+        if (dec) callback(dec);
+      } else {
+        callback(val);
+      }
+    }
+  }, (err) => {
+    console.warn('[RTDB] Settings listener error:', err.message);
+  });
 }
 
 // --- ATTENDANCE SESSIONS ---

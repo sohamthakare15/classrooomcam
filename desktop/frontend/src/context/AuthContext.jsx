@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiService } from '../services/apiService';
+import { cryptoService } from '../services/cryptoService';
 
 const AuthContext = createContext(null);
 
@@ -9,23 +10,17 @@ export function AuthProvider({ children }) {
   const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
-    // Local session persistence with expiration check
-    const saved = localStorage.getItem('smartclassroom_auth_session');
-    if (saved) {
-      try {
-        const session = JSON.parse(saved);
-        const now = Date.now();
-        if (session.expiresAt && now > session.expiresAt) {
-          localStorage.removeItem('smartclassroom_auth_session');
-          setCurrentUser(null);
-        } else {
-          setCurrentUser(session.user);
-        }
-      } catch (_) {
+    // Encrypted local session persistence with expiration check
+    const session = cryptoService.getEncryptedItem('smartclassroom_auth_session', null);
+    if (session) {
+      const now = Date.now();
+      if (session.expiresAt && now > session.expiresAt) {
         localStorage.removeItem('smartclassroom_auth_session');
+        setCurrentUser(null);
+      } else {
+        setCurrentUser(session.user);
       }
     } else {
-      // No demo teacher session; user must authenticate via login portal
       setCurrentUser(null);
     }
     setLoading(false);
@@ -46,7 +41,7 @@ export function AuthProvider({ children }) {
           user,
           expiresAt: Date.now() + 24 * 60 * 60 * 1000
         };
-        localStorage.setItem('smartclassroom_auth_session', JSON.stringify(session));
+        cryptoService.setEncryptedItem('smartclassroom_auth_session', session);
         setCurrentUser(user);
         return user;
       }
@@ -68,7 +63,7 @@ export function AuthProvider({ children }) {
           user: adminUser,
           expiresAt: Date.now() + 24 * 60 * 60 * 1000
         };
-        localStorage.setItem('smartclassroom_auth_session', JSON.stringify(session));
+        cryptoService.setEncryptedItem('smartclassroom_auth_session', session);
         setCurrentUser(adminUser);
         return adminUser;
       }
