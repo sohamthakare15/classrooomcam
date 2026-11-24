@@ -239,6 +239,39 @@ export function subscribeToSessions(callback) {
   });
 }
 
+export async function deleteSessionFromRTDB(sessionId) {
+  if (!database || !isConfigured || !sessionId) return false;
+  try {
+    await remove(ref(database, `attendance_sessions/${sessionId}`));
+    const recSnap = await get(ref(database, 'attendance_records'));
+    if (recSnap.exists()) {
+      const records = recSnap.val();
+      const deletes = Object.entries(records)
+        .filter(([, r]) => r && r.sessionId === sessionId)
+        .map(([recId]) => remove(ref(database, `attendance_records/${recId}`)));
+      await Promise.all(deletes);
+    }
+    return true;
+  } catch (err) {
+    console.warn('[RTDB] Failed to delete session:', err.message);
+    return false;
+  }
+}
+
+export async function clearAllSessionsFromRTDB() {
+  if (!database || !isConfigured) return false;
+  try {
+    await Promise.all([
+      remove(ref(database, 'attendance_sessions')),
+      remove(ref(database, 'attendance_records'))
+    ]);
+    return true;
+  } catch (err) {
+    console.warn('[RTDB] Failed to clear all sessions:', err.message);
+    return false;
+  }
+}
+
 // --- INSTITUTION SETTINGS ---
 
 export async function syncSettingsToRTDB(settings) {

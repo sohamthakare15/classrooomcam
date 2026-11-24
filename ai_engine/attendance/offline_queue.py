@@ -343,8 +343,12 @@ class OfflineSyncQueue:
             cursor.execute("SELECT data FROM local_records ORDER BY updated_at DESC")
             return [json.loads(r["data"]) for r in cursor.fetchall()]
 
+    def _is_production_db(self) -> bool:
+        norm_path = self.db_path.replace("\\", "/").lower()
+        return "pytest" not in norm_path and "/temp/" not in norm_path and "test_" not in os.path.basename(norm_path)
+
     def delete_local_session(self, session_id: str) -> bool:
-        """Removes an unwanted session and its associated records and snapshots from the SQLite database."""
+        """Removes an unwanted session and its associated records and snapshots from SQLite and Firebase RTDB."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
             # Delete associated snapshots
@@ -360,10 +364,27 @@ class OfflineSyncQueue:
             # Remove any un-synced queue items for this session
             cursor.execute("DELETE FROM sync_queue WHERE doc_id = ? OR payload LIKE ?", (session_id, f"%{session_id}%"))
             conn.commit()
-            return True
+
+        # Directly delete from Firebase RTDB without re-inserting into local_sessions
+        if self._is_production_db():
+            def _delete_rtdb_session():
+                try:
+                    req = urllib.request.Request(f"{self.rtdb_url}/attendance_sessions/{session_id}.json", method="DELETE")
+                    urllib.request.urlopen(req, timeout=5.0).close()
+                    records_data = self._rtdb_fetch("attendance_records")
+                    if records_data:
+                        for rec_id, rec in records_data.items():
+                            if isinstance(rec, dict) and rec.get("sessionId") == session_id:
+                                r_req = urllib.request.Request(f"{self.rtdb_url}/attendance_records/{rec_id}.json", method="DELETE")
+                                urllib.request.urlopen(r_req, timeout=5.0).close()
+                except Exception as e:
+                    print(f"[OfflineSyncQueue] RTDB delete_local_session warning: {e}")
+            threading.Thread(target=_delete_rtdb_session, daemon=True).start()
+
+        return True
 
     def clear_all_sessions(self) -> int:
-        """Removes all past sessions and records from SQLite database to clean unwanted test data."""
+        """Removes all past sessions and records from SQLite and Firebase RTDB."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT COUNT(*) FROM local_sessions")
@@ -373,7 +394,21 @@ class OfflineSyncQueue:
             cursor.execute("DELETE FROM local_sessions")
             cursor.execute("DELETE FROM sync_queue WHERE collection_name IN ('attendance_sessions', 'attendance_records')")
             conn.commit()
-            return count
+
+        # Also clear Firebase RTDB sessions & records (production DB only)
+        rtdb_count = 0
+        if self._is_production_db():
+            try:
+                rtdb_sessions = self._rtdb_fetch("attendance_sessions")
+                if isinstance(rtdb_sessions, dict):
+                    rtdb_count = len(rtdb_sessions)
+                for col in ("attendance_sessions", "attendance_records"):
+                    req = urllib.request.Request(f"{self.rtdb_url}/{col}.json", method="DELETE")
+                    urllib.request.urlopen(req, timeout=5.0).close()
+            except Exception as e:
+                print(f"[OfflineSyncQueue] RTDB clear_all_sessions warning: {e}")
+
+        return max(count, rtdb_count)
 
     def get_pending_count(self) -> int:
         with self._get_connection() as conn:

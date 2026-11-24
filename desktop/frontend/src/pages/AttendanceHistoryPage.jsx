@@ -20,7 +20,12 @@ import Modal from '../components/Modal';
 import PrintableRegister from '../components/PrintableRegister';
 import { apiService } from '../services/apiService';
 import { storageService } from '../services/storageService';
-import { subscribeToSessions, fetchSessionsFromRTDB } from '../services/rtdbService';
+import {
+  subscribeToSessions,
+  fetchSessionsFromRTDB,
+  deleteSessionFromRTDB,
+  clearAllSessionsFromRTDB
+} from '../services/rtdbService';
 import { formatKolkataDate } from '../utils/dateUtils';
 
 export default function AttendanceHistoryPage() {
@@ -42,13 +47,8 @@ export default function AttendanceHistoryPage() {
     loadData();
 
     const unsubSessions = subscribeToSessions((rtdbSessions) => {
-      if (Array.isArray(rtdbSessions) && rtdbSessions.length > 0) {
-        setSessions((prev) => {
-          const merged = new Map();
-          prev.forEach(s => { if (s && s.sessionId) merged.set(s.sessionId, s); });
-          rtdbSessions.forEach(s => { if (s && s.sessionId) merged.set(s.sessionId, s); });
-          return Array.from(merged.values());
-        });
+      if (Array.isArray(rtdbSessions)) {
+        setSessions(rtdbSessions);
       }
     });
 
@@ -89,9 +89,12 @@ export default function AttendanceHistoryPage() {
       return;
     }
     try {
-      await apiService.deleteSession(sessionId);
+      await Promise.all([
+        apiService.deleteSession(sessionId).catch(() => null),
+        deleteSessionFromRTDB(sessionId)
+      ]);
+      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
       setStatusMsg(`Session for Class ${classStr} removed successfully.`);
-      loadData();
       setTimeout(() => setStatusMsg(''), 4000);
     } catch (err) {
       alert(`Error deleting session: ${err.message}`);
@@ -103,9 +106,12 @@ export default function AttendanceHistoryPage() {
       return;
     }
     try {
-      const res = await apiService.clearAllSessions();
-      setStatusMsg(`Cleaned up ${res.deletedCount || 0} past test sessions.`);
-      loadData();
+      const [res] = await Promise.all([
+        apiService.clearAllSessions().catch(() => ({ deletedCount: sessions.length })),
+        clearAllSessionsFromRTDB()
+      ]);
+      setSessions([]);
+      setStatusMsg(`Cleaned up ${res?.deletedCount || sessions.length} past test sessions.`);
       setTimeout(() => setStatusMsg(''), 4000);
     } catch (err) {
       alert(`Error clearing sessions: ${err.message}`);
