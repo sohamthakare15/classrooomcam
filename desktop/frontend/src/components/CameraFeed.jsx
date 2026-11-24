@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiService } from '../services/apiService';
-import { Video, RefreshCw, ShieldAlert, Camera, CheckCircle2 } from 'lucide-react';
+import { Video, RefreshCw, ShieldAlert, Camera, SwitchCamera } from 'lucide-react';
 
 export default function CameraFeed({
   isBrowserCamera = false,
@@ -8,6 +8,7 @@ export default function CameraFeed({
 }) {
   const [streamError, setStreamError] = useState(false);
   const [key, setKey] = useState(0);
+  const [facingMode, setFacingMode] = useState('user'); // 'user' (Front) | 'environment' (Back)
   const [browserPermissionError, setBrowserPermissionError] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
 
@@ -29,7 +30,7 @@ export default function CameraFeed({
           video: {
             width: { ideal: 1280 },
             height: { ideal: 720 },
-            facingMode: 'user'
+            facingMode: { ideal: facingMode }
           },
           audio: false
         })
@@ -156,7 +157,11 @@ export default function CameraFeed({
         streamRef.current = null;
       }
     };
-  }, [isBrowserCamera, key]);
+  }, [isBrowserCamera, facingMode, key]);
+
+  const handleToggleFacingMode = () => {
+    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
+  };
 
   const handleReload = () => {
     setStreamError(false);
@@ -178,10 +183,21 @@ export default function CameraFeed({
         </div>
         <div className="flex items-center gap-2">
           {isBrowserCamera ? (
-            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
-              <Camera className="w-3 h-3" />
-              PHYSICAL WEBCAM ACTIVE
-            </span>
+            <>
+              <button
+                type="button"
+                onClick={handleToggleFacingMode}
+                title={facingMode === 'user' ? 'Switch to Back Camera' : 'Switch to Front Camera'}
+                className="bg-[#ea580c] hover:bg-[#c2410c] text-white text-[11px] font-semibold px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <SwitchCamera className="w-3.5 h-3.5" />
+                <span>{facingMode === 'user' ? 'Back Cam' : 'Front Cam'}</span>
+              </button>
+              <span className="hidden sm:flex bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-semibold px-2 py-0.5 rounded items-center gap-1">
+                <Camera className="w-3 h-3" />
+                {facingMode === 'user' ? 'FRONT CAM' : 'BACK CAM'}
+              </span>
+            </>
           ) : (
             <span className="bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-[11px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
               <Video className="w-3 h-3" />
