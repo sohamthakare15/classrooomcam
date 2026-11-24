@@ -755,10 +755,13 @@ class OfflineSyncQueue:
             return [dict(r) for r in cursor.fetchall()]
 
     def upsert_section(self, class_name: str, section_name: str, room: str = "") -> Dict[str, Any]:
-        """Creates or updates an academic section."""
+        """Creates or updates an academic section with URL-safe and RTDB-safe sectionId."""
+        import re
         cname = class_name.strip()
         sname = section_name.strip()
-        sec_id = f"sec_{cname.lower()}_{sname.lower()}"
+        safe_c = re.sub(r'[^a-z0-9]+', '_', cname.lower()).strip('_') or 'cls'
+        safe_s = re.sub(r'[^a-z0-9]+', '_', sname.lower()).strip('_') or 'sec'
+        sec_id = f"sec_{safe_c}_{safe_s}"
         now = time.time()
         with self._get_connection() as conn:
             cursor = conn.cursor()
