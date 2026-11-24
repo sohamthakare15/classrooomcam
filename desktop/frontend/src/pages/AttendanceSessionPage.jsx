@@ -25,6 +25,7 @@ import Modal from '../components/Modal';
 import PrintableRegister from '../components/PrintableRegister';
 import { storageService } from '../services/storageService';
 import { apiService } from '../services/apiService';
+import { syncSessionToRTDB, syncRecordToRTDB } from '../services/rtdbService';
 import { useAuth } from '../context/AuthContext';
 import { getTodayKolkataDateString, formatKolkataDate } from '../utils/dateUtils';
 
@@ -157,36 +158,74 @@ export default function AttendanceSessionPage() {
     if (!activeSession) return;
     setShowConfirmSaveModal(false);
     setLoading(true);
+    const targetSessionId = activeSession.sessionId;
+    const finalizedBy = currentUser?.displayName || currentUser?.email || 'Lecturer';
 
     try {
-      const targetSessionId = activeSession.sessionId;
-      const res = await apiService.finalizeSession(
-        targetSessionId,
-        currentUser?.displayName || currentUser?.email || 'Lecturer',
-        enrolledStudents
-      );
-      if (res.success) {
+      let res = null;
+      try {
+        res = await apiService.finalizeSession(targetSessionId, finalizedBy, enrolledStudents);
+      } catch (_) {
+        // Fallback if backend is restarting/unreachable: finalize directly to Firebase RTDB
+      }
+
+      let finalRecords = [];
+      if (res && res.success) {
         try {
           const detRes = await apiService.getSessionDetails(targetSessionId);
-          setFinalizedRegisterData({
-            session: res.session || activeSession,
-            records: detRes?.records || []
-          });
-        } catch (_) {
-          setFinalizedRegisterData({
-            session: res.session || activeSession,
-            records: sessionRecords
-          });
-        }
-
-        setStatusMessage({
-          text: `Attendance saved successfully for Class ${activeSession.class}-${activeSession.section}! Records permanently stored in database.`,
-          type: 'success'
-        });
-        setActiveSession(null);
-        setSessionRecords([]);
-        loadSessionState();
+          finalRecords = detRes?.records || [];
+        } catch (_) {}
       }
+
+      if (finalRecords.length === 0) {
+        const recMap = new Map(sessionRecords.map(r => [r.studentId, r]));
+        finalRecords = classRoster.map(stu => {
+          const existing = recMap.get(stu.studentId);
+          if (existing) return existing;
+          return {
+            recordId: `session_${targetSessionId}_student_${stu.studentId}`,
+            sessionId: targetSessionId,
+            studentId: stu.studentId,
+            status: 'absent',
+            timestamp: Date.now() / 1000,
+            confidence: 0,
+            method: 'auto_absent',
+            markedBy: finalizedBy
+          };
+        });
+      }
+
+      const presentCnt = finalRecords.filter(r => ['present', 'manually_added', 'late'].includes(r.status)).length;
+      const absentCnt = Math.max(0, finalRecords.length - presentCnt);
+      const finalizedSession = {
+        ...(res?.session || activeSession),
+        status: 'completed',
+        endTime: Date.now() / 1000,
+        finalizedBy,
+        totalStudents: finalRecords.length,
+        totalEnrolled: finalRecords.length,
+        presentCount: presentCnt,
+        totalPresent: presentCnt,
+        absentCount: absentCnt
+      };
+
+      // Always persist finalized session & records directly to Firebase RTDB
+      await Promise.all([
+        syncSessionToRTDB(finalizedSession),
+        ...finalRecords.map(r => syncRecordToRTDB(r))
+      ]);
+
+      setFinalizedRegisterData({
+        session: finalizedSession,
+        records: finalRecords
+      });
+      setStatusMessage({
+        text: `Attendance saved successfully for ${activeSession.class}-${activeSession.section}! Synced to Firebase cloud.`,
+        type: 'success'
+      });
+      setActiveSession(null);
+      setSessionRecords([]);
+      loadSessionState();
     } catch (err) {
       setStatusMessage({ text: `Error saving attendance: ${err.message}`, type: 'error' });
     } finally {
