@@ -38,27 +38,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8 select-none">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center space-y-2">
-        <div className="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-white mx-auto shadow-xs">
-          <GraduationCap className="w-6 h-6" />
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center py-8 px-4 sm:px-6 lg:px-8 select-none relative overflow-hidden">
+      {/* Ambient background glowing orbs */}
+      <div className="ambient-bg" aria-hidden="true">
+        <div className="ambient-glow-1" />
+        <div className="ambient-glow-2" />
+        <div className="ambient-glow-3" />
+      </div>
+
+      <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-md text-center space-y-2">
+        <div className="w-14 h-14 rounded-3xl bg-gradient-to-tr from-[#FF5A36] to-[#FF7849] flex items-center justify-center text-white mx-auto shadow-md shadow-[#FF5A36]/30 border border-white/60">
+          <GraduationCap className="w-8 h-8" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">SmartClass Attendance</h2>
-        <p className="text-xs text-slate-500">
-          Faculty &amp; Academic Administration Portal
+        <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">SmartClass AI</h2>
+        <p className="text-xs text-slate-500 font-medium">
+          Faculty Attendance & Academic Portal
         </p>
       </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-7 px-5 sm:px-8 border border-slate-200 rounded-xl shadow-sm">
+      <div className="relative z-10 mt-6 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="glass-card py-7 px-5 sm:px-10 border border-white/90 shadow-xl">
           {/* Header */}
-          <div className="mb-5">
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <LogIn className="w-4 h-4 text-blue-600" />
-              <span>Sign in to your account</span>
+          <div className="mb-6 text-center">
+            <h3 className="text-base font-extrabold text-slate-900 flex items-center justify-center gap-2">
+              <LogIn className="w-4 h-4 text-[#FF5A36]" />
+              <span>Sign In to Your Account</span>
             </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Enter your institutional email or username to continue.
+            <p className="text-[11px] text-slate-500 font-medium mt-1">
+              Enter your institutional credentials to access the lecturer dashboard.
             </p>
           </div>
 
@@ -86,7 +93,7 @@ export default function LoginPage() {
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder="Enter your email or username"
                   autoComplete="username"
-                  className="block w-full pl-10 pr-3.5 py-2.5 bg-white/90 border border-slate-200 rounded-2xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                  className="block w-full pl-10 pr-3.5 py-2.5 bg-white/90 border border-slate-200 rounded-2xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FF5A36] focus:border-transparent transition-all"
                 />
               </div>
             </div>
@@ -106,7 +113,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   autoComplete="current-password"
-                  className="block w-full pl-10 pr-10 py-2.5 bg-white/90 border border-slate-200 rounded-2xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all"
+                  className="block w-full pl-10 pr-10 py-2.5 bg-white/90 border border-slate-200 rounded-2xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#FF5A36] focus:border-transparent transition-all"
                 />
                 <button
                   type="button"
@@ -115,7 +122,7 @@ export default function LoginPage() {
                   title={showLoginPassword ? "Hide password" : "Show password"}
                 >
                   {showLoginPassword ? (
-                    <EyeOff className="w-4 h-4 text-blue-600" />
+                    <EyeOff className="w-4 h-4 text-[#FF5A36]" />
                   ) : (
                     <Eye className="w-4 h-4" />
                   )}
