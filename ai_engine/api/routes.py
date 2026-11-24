@@ -22,6 +22,7 @@ from ai_engine.api.schemas import (
     ReviewResolveRequest,
     LoginRequest,
     UserCreateRequest,
+    UserUpdateRequest,
     StudentRecordRequest,
     SectionRecordRequest,
     SectionAssignRequest
@@ -605,6 +606,25 @@ def create_user_account(req: UserCreateRequest, auth: bool = Depends(verify_toke
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
+
+@router.put("/auth/users/{uid}")
+def update_user_account(uid: str, req: UserUpdateRequest, auth: bool = Depends(verify_token)):
+    try:
+        updated = sync_queue.update_user(
+            uid=uid,
+            full_name=req.fullName,
+            department=req.department,
+            password=req.password
+        )
+        return {
+            "success": True,
+            "message": "User account updated successfully",
+            "user": updated
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update user: {str(e)}")
 
 @router.delete("/auth/users/{uid}")
 def delete_user_account(uid: str, auth: bool = Depends(verify_token)):

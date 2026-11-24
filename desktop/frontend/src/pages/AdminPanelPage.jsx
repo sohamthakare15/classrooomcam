@@ -17,7 +17,8 @@ import {
   GraduationCap,
   Sparkles,
   Eye,
-  EyeOff
+  EyeOff,
+  Edit
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiService } from '../services/apiService';
@@ -49,6 +50,14 @@ export default function AdminPanelPage() {
   // Delete Confirmation Modal States
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+
+  // Edit Teacher & Reset Password Modal States
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editFullName, setEditFullName] = useState('');
+  const [editDepartment, setEditDepartment] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [showEditPassword, setShowEditPassword] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -163,6 +172,46 @@ export default function AdminPanelPage() {
     } catch (err) {
       setStatusMsg({ text: `Delete failed: ${err.message}`, type: 'error' });
     } finally {
+      setTimeout(() => setStatusMsg({ text: '', type: '' }), 5000);
+    }
+  };
+
+  const openEditModal = (user) => {
+    setEditingUser(user);
+    setEditFullName(user.fullName || user.displayName || '');
+    setEditDepartment(user.department || '');
+    setEditPassword('');
+    setShowEditPassword(false);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateTeacher = async (e) => {
+    e.preventDefault();
+    if (!editingUser || !editFullName.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        fullName: editFullName.trim(),
+        department: editDepartment.trim() || 'Academic Faculty'
+      };
+      if (editPassword.trim()) {
+        payload.password = editPassword.trim();
+      }
+      const res = await apiService.updateUser(editingUser.uid, payload);
+      if (res && res.user) {
+        await syncUserToRTDB(res.user);
+        setStatusMsg({
+          text: `Updated account for ${res.user.fullName}${editPassword.trim() ? ' (password reset)' : ''}.`,
+          type: 'success'
+        });
+        setIsEditModalOpen(false);
+        setEditingUser(null);
+        loadUsers();
+      }
+    } catch (err) {
+      setStatusMsg({ text: err.message || 'Failed to update teacher', type: 'error' });
+    } finally {
+      setIsSubmitting(false);
       setTimeout(() => setStatusMsg({ text: '', type: '' }), 5000);
     }
   };
@@ -373,13 +422,22 @@ export default function AdminPanelPage() {
                             Protected System Account
                           </span>
                         ) : (
-                          <button
-                            onClick={() => confirmDeleteUser(u)}
-                            className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors border border-rose-200 cursor-pointer"
-                            title="Remove Teacher Account"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => openEditModal(u)}
+                              className="p-1.5 text-slate-600 hover:text-[#ea580c] hover:bg-orange-50 rounded-lg transition-colors border border-slate-200 cursor-pointer"
+                              title="Edit Teacher / Reset Password"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => confirmDeleteUser(u)}
+                              className="p-1.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors border border-rose-200 cursor-pointer"
+                              title="Remove Teacher Account"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -506,7 +564,63 @@ export default function AdminPanelPage() {
         </form>
       </Modal>
 
-      {/* 5. Delete Teacher Confirmation Modal */}
+      {/* 5. Edit Teacher & Password Reset Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title={`Edit Teacher: ${editingUser?.fullName || ''}`}
+      >
+        <form onSubmit={handleUpdateTeacher} className="space-y-4 text-xs">
+          <div>
+            <label className="block text-slate-700 font-bold mb-1.5">Full Name *</label>
+            <input
+              type="text"
+              required
+              value={editFullName}
+              onChange={(e) => setEditFullName(e.target.value)}
+              className="glass-input w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-700 font-bold mb-1.5">Department</label>
+            <input
+              type="text"
+              value={editDepartment}
+              onChange={(e) => setEditDepartment(e.target.value)}
+              className="glass-input w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-slate-700 font-bold mb-1.5">New Password (leave blank to keep current)</label>
+            <div className="relative">
+              <input
+                type={showEditPassword ? "text" : "password"}
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                placeholder="Optional new password"
+                className="glass-input w-full pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowEditPassword(!showEditPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                {showEditPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+            <button type="button" onClick={() => setIsEditModalOpen(false)} className="enterprise-btn-secondary text-xs">
+              Cancel
+            </button>
+            <button type="submit" disabled={isSubmitting} className="enterprise-btn-primary text-xs">
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* 6. Delete Teacher Confirmation Modal */}
       <Modal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}

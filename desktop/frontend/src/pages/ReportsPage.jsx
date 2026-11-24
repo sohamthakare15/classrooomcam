@@ -126,11 +126,13 @@ export default function ReportsPage() {
         presentCount,
         absentCount,
         percentage: `${pct}%`,
+        rateNum: pct,
         status: pct >= 85 ? 'GOOD' : pct >= 75 ? 'WARNING' : 'CRITICAL'
       };
     })
     .filter(r => {
       if (reportType === 'ABSENT_ONLY' && r.absentCount === 0) return false;
+      if (reportType === 'SHORTAGE' && (r.totalSessions === 0 || r.rateNum >= 75)) return false;
       return true;
     });
 
@@ -202,15 +204,22 @@ export default function ReportsPage() {
       header: "Rate",
       accessor: "percentage",
       render: (r) => (
-        <span className={`font-mono font-bold px-2 py-0.5 rounded text-xs ${
-          r.status === 'GOOD'
-            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-            : r.status === 'WARNING'
-            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-            : 'bg-rose-50 text-rose-700 border border-rose-200'
-        }`}>
-          {r.percentage}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={`font-mono font-bold px-2 py-0.5 rounded text-xs ${
+            r.status === 'GOOD'
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              : r.status === 'WARNING'
+              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+              : 'bg-rose-50 text-rose-700 border border-rose-200'
+          }`}>
+            {r.percentage}
+          </span>
+          {r.totalSessions > 0 && r.rateNum < 75 && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200">
+              &lt;75% Shortage
+            </span>
+          )}
+        </div>
       )
     }
   ];
@@ -287,6 +296,7 @@ export default function ReportsPage() {
                 >
                   <option value="STUDENT_WISE">Student-wise Aggregate</option>
                   <option value="ABSENT_ONLY">Absentee List Only</option>
+                  <option value="SHORTAGE">Shortage Alert (&lt; 75%)</option>
                 </select>
               </div>
 
@@ -319,8 +329,16 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="text-slate-500">
-              Showing <strong>{reportRows.length}</strong> students
+            <div className="flex items-center gap-3 text-slate-500">
+              <span>Showing <strong>{reportRows.length}</strong> students</span>
+              <button
+                type="button"
+                onClick={exportCSV}
+                className="enterprise-btn-secondary text-xs py-1.5 px-3"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Export CSV</span>
+              </button>
             </div>
           </div>
 

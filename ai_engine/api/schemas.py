@@ -138,3 +138,8 @@ class UserCreateRequest(BaseModel):
     fullName: str
     role: Optional[str] = "teacher"
     department: Optional[str] = "Faculty of Science"
+
+class UserUpdateRequest(BaseModel):
+    fullName: Optional[str] = None
+    department: Optional[str] = None
+    password: Optional[str] = None

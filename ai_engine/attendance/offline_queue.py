@@ -589,6 +589,55 @@ class OfflineSyncQueue:
             """)
             return [dict(r) for r in cursor.fetchall()]
 
+    def update_user(
+        self,
+        uid: str,
+        full_name: Optional[str] = None,
+        department: Optional[str] = None,
+        password: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Updates a teacher/faculty user account and optional password in SQLite + Firebase RTDB."""
+        now = time.time()
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM local_users WHERE uid = ?", (uid,))
+            row = cursor.fetchone()
+            if not row:
+                raise ValueError("User account not found")
+            if row["is_permanent"]:
+                raise ValueError("Cannot modify permanent administrator account")
+
+            new_name = full_name.strip() if full_name and full_name.strip() else row["full_name"]
+            new_dept = department.strip() if department is not None and department.strip() else row["department"]
+            pwd_hash, salt = row["password_hash"], row["salt"]
+            if password and password.strip():
+                pwd_hash, salt = _hash_password(password.strip())
+
+            cursor.execute("""
+                UPDATE local_users
+                SET full_name = ?, department = ?, password_hash = ?, salt = ?, updated_at = ?
+                WHERE uid = ?
+            """, (new_name, new_dept, pwd_hash, salt, now, uid))
+            conn.commit()
+
+            user_obj = {
+                "uid": uid,
+                "email": row["email"],
+                "displayName": new_name,
+                "fullName": new_name,
+                "role": row["role"],
+                "department": new_dept,
+                "isPermanent": False,
+                "createdAt": row["created_at"],
+                "updatedAt": now
+            }
+            self.enqueue_operation("faculty_users", uid, "SET", {
+                **user_obj,
+                "passwordHash": pwd_hash,
+                "salt": salt
+            })
+            return user_obj
+
     def delete_user(self, uid: str) -> bool:
         """Deletes user account from SQLite database, preventing deletion of permanent admin."""
         with self._get_connection() as conn:

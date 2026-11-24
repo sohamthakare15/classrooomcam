@@ -35,6 +35,7 @@ export default function AttendanceSessionPage() {
   const [selectedClass, setSelectedClass] = useState('10');
   const [selectedSection, setSelectedSection] = useState('A');
   const [sessionDate, setSessionDate] = useState(getTodayKolkataDateString());
+  const [sessionSubject, setSessionSubject] = useState('');
 
   const [activeSession, setActiveSession] = useState(null);
   const [sessionRecords, setSessionRecords] = useState([]);
@@ -103,12 +104,15 @@ export default function AttendanceSessionPage() {
     setLoading(true);
     setStatusMessage({ text: '', type: '' });
     try {
+      const sessionTitle = sessionSubject.trim()
+        ? `${selectedClass}-${selectedSection} • ${sessionSubject.trim()}`
+        : `${selectedClass}-${selectedSection} Attendance`;
       const res = await apiService.startAttendance(
         selectedClass,
         selectedSection,
         sessionDate,
         currentUser?.displayName || currentUser?.email || 'Lecturer',
-        `Class ${selectedClass}-${selectedSection} Attendance`,
+        sessionTitle,
         allowDuplicate
       );
       if (res.success) {
@@ -422,6 +426,17 @@ export default function AttendanceSessionPage() {
                 value={sessionDate}
                 onChange={(e) => setSessionDate(e.target.value)}
                 className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="font-bold text-slate-700">Subject / Lecture:</label>
+              <input
+                type="text"
+                value={sessionSubject}
+                onChange={(e) => setSessionSubject(e.target.value)}
+                placeholder="e.g. Mathematics, DBMS, Physics"
+                className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
               />
             </div>
           </div>

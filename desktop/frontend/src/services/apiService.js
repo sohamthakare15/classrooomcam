@@ -424,6 +424,15 @@ export const apiService = {
     return handleResponse(res);
   },
 
+  async updateUser(uid, userData) {
+    const res = await fetch(`${BASE_URL}/auth/users/${uid}`, {
+      method: 'PUT',
+      headers: defaultHeaders,
+      body: JSON.stringify(userData)
+    });
+    return handleResponse(res);
+  },
+
   async deleteUser(uid) {
     const res = await fetch(`${BASE_URL}/auth/users/${uid}`, {
       method: 'DELETE',

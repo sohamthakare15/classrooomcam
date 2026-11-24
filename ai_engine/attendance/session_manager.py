@@ -64,19 +64,22 @@ class SessionManager:
         title: Optional[str] = None,
         allow_duplicate: bool = False
     ) -> Dict[str, Any]:
-        # Prevent duplicate attendance sessions for the same section and date unless explicitly allowed
+        # Prevent duplicate attendance sessions for the same section, date, and subject/title unless explicitly allowed
         if not allow_duplicate:
+            req_title = (title or f"{class_name}-{section} Attendance").strip().lower()
             existing_sessions = self.sync_queue.get_local_sessions()
             for s in existing_sessions:
+                s_title = str(s.get("title") or "").strip().lower()
                 if (str(s.get("class")).strip() == str(class_name).strip() and 
                     str(s.get("section")).strip().lower() == str(section).strip().lower() and 
-                    str(s.get("date")).strip() == str(session_date).strip()):
+                    str(s.get("date")).strip() == str(session_date).strip() and
+                    (not title or s_title == req_title)):
                     if s.get("status") == SessionStatus.IN_PROGRESS:
                         self.active_session = s
                         self.engine.set_active_session(s["sessionId"], s)
                         return s
                     elif s.get("status") == SessionStatus.COMPLETED:
-                        raise ValueError(f"Attendance session for Class {class_name}-{section} on {session_date} is already finalized. Please review in Attendance History.")
+                        raise ValueError(f"Attendance session for {class_name}-{section} ({title or session_date}) is already finalized. Please review in Attendance History.")
 
         session_id = f"sess_{int(time.time())}_{uuid.uuid4().hex[:6]}"
         now = time.time()
