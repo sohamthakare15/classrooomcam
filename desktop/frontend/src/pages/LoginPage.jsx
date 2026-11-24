@@ -149,15 +149,11 @@ export default function LoginPage() {
           </form>
 
           {/* Secure Institutional Footer Note */}
-          <div className="mt-6 pt-4 border-t border-slate-100 text-center space-y-2">
+          <div className="mt-6 pt-4 border-t border-slate-100 text-center">
             <span className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>Authorized Institutional Access Only</span>
             </span>
-            <p className="text-[10px] text-slate-400 font-medium">
-              Designed & Developed by{' '}
-              <span className="font-bold text-slate-700">CodeNBuild Technologies</span>
-            </p>
           </div>
         </div>
       </div>

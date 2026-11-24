@@ -111,7 +111,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
         </nav>
 
         {/* User Dashlet in Footer */}
-        <div className="p-3.5 m-3.5 mb-1.5 rounded-2xl bg-slate-50/80 border border-slate-100 shadow-2xs">
+        <div className="p-3.5 m-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FF5A36] to-[#FF7849] text-white font-extrabold text-xs flex items-center justify-center font-mono shadow-xs">
               {(currentUser?.displayName || currentUser?.fullName || 'FA').slice(0, 2).toUpperCase()}
@@ -125,14 +125,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }) {
               </span>
             </div>
           </div>
-        </div>
-
-        {/* Developer Attribution */}
-        <div className="px-4 pb-3.5 pt-1 text-center select-none">
-          <p className="text-[10px] text-slate-400 font-medium tracking-tight">
-            Designed & Developed by{' '}
-            <span className="font-bold text-slate-600">CodeNBuild Technologies</span>
-          </p>
         </div>
       </aside>
     </>
