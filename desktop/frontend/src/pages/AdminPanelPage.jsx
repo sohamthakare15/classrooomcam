@@ -225,14 +225,14 @@ export default function AdminPanelPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/60">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE]">
+            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-200">
               Faculty & Access
             </span>
             <span className="text-slate-300">&bull;</span>
             <span className="text-xs text-slate-500 font-medium">Teacher Directory</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5 mt-1.5">
-            <ShieldCheck className="w-6 h-6 text-[#FF5A36]" />
+            <ShieldCheck className="w-6 h-6 text-blue-600" />
             <span>Admin Panel & Teacher Accounts</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -278,12 +278,12 @@ export default function AdminPanelPage() {
       {/* 2. Overview Wink Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {/* Card 1: Registered Teachers */}
-        <div className="glass-card p-6 border-l-4 border-l-[#FF5A36]">
+        <div className="glass-card p-6 border-l-4 border-l-blue-600">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Active Faculty Teachers
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-[#FFF2EE] border border-[#FFD9CE] flex items-center justify-center text-[#FF5A36] shadow-2xs">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shadow-2xs">
               <GraduationCap className="w-5 h-5" />
             </div>
           </div>
@@ -372,7 +372,7 @@ export default function AdminPanelPage() {
                           <div className={`w-9 h-9 rounded-2xl flex items-center justify-center text-xs font-extrabold text-white shadow-2xs ${
                             isMasterAdmin
                               ? 'bg-gradient-to-tr from-amber-500 to-orange-500'
-                              : 'bg-gradient-to-tr from-[#FF5A36] to-[#FF7849]'
+                              : 'bg-slate-900'
                           }`}>
                             {(u.fullName || u.displayName || 'T').slice(0, 2).toUpperCase()}
                           </div>
@@ -405,8 +405,8 @@ export default function AdminPanelPage() {
                             <span>Administrator</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE]">
-                            <GraduationCap className="w-3.5 h-3.5 text-[#FF5A36]" />
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200">
+                            <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
                             <span>Faculty Teacher</span>
                           </span>
                         )}
@@ -425,7 +425,7 @@ export default function AdminPanelPage() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => openEditModal(u)}
-                              className="p-1.5 text-slate-600 hover:text-[#ea580c] hover:bg-orange-50 rounded-lg transition-colors border border-slate-200 cursor-pointer"
+                              className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-slate-200 cursor-pointer"
                               title="Edit Teacher / Reset Password"
                             >
                               <Edit className="w-4 h-4" />
@@ -513,7 +513,7 @@ export default function AdminPanelPage() {
                 title={showTeacherPassword ? "Hide password" : "Show password"}
               >
                 {showTeacherPassword ? (
-                  <EyeOff className="w-4 h-4 text-[#FF5A36]" />
+                  <EyeOff className="w-4 h-4 text-blue-600" />
                 ) : (
                   <Eye className="w-4 h-4" />
                 )}
@@ -538,8 +538,8 @@ export default function AdminPanelPage() {
             </div>
           </div>
 
-          <div className="p-3 bg-[#FFF2EE] rounded-2xl border border-[#FFD9CE] text-xs text-[#FF5A36] flex items-start gap-2">
-            <Sparkles className="w-4 h-4 text-[#FF5A36] shrink-0 mt-0.5" />
+          <div className="p-3 bg-blue-50 rounded-2xl border border-blue-200 text-xs text-blue-600 flex items-start gap-2">
+            <Sparkles className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
             <span className="font-semibold">
               The teacher account will be immediately created in the real database and can log in without any dummy placeholders.
             </span>

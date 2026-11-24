@@ -200,14 +200,14 @@ export default function SectionsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/60">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE]">
+            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-200">
               Cohorts & Classes
             </span>
             <span className="text-slate-300">&bull;</span>
             <span className="text-xs text-slate-500 font-medium">Academic Sections</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 mt-1.5">
-            <Layers className="w-6 h-6 text-[#FF5A36]" />
+            <Layers className="w-6 h-6 text-blue-600" />
             <span>Class & Section Management</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -262,7 +262,7 @@ export default function SectionsPage() {
               className={`glass-card p-6 cursor-pointer transition-all border ${
                 isSelected
                   ? 'border-[#FF5A36] ring-2 ring-[#FF5A36]/20 shadow-md bg-[#FFF5F2]/40'
-                  : 'hover:border-[#FFD9CE]'
+                  : 'hover:border-blue-200'
               }`}
             >
               <div className="flex items-start justify-between">
@@ -279,7 +279,7 @@ export default function SectionsPage() {
                   </div>
                 </div>
 
-                <div className="w-10 h-10 rounded-2xl bg-[#FFF2EE] border border-[#FFD9CE] flex items-center justify-center text-[#FF5A36] font-extrabold font-mono text-sm shadow-2xs">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 font-extrabold font-mono text-sm shadow-2xs">
                   {sec.className}
                 </div>
               </div>
@@ -328,10 +328,10 @@ export default function SectionsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100">
           <div>
             <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#FF5A36]" />
+              <Users className="w-4 h-4 text-blue-600" />
               <span>Section Student Roster</span>
               {selectedSectionId !== 'ALL' && (
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#FFF2EE] text-[#FF5A36] font-bold border border-[#FFD9CE]">
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 font-bold border border-blue-200">
                   Filtered by {sections.find(s => s.sectionId === selectedSectionId)?.className}-{sections.find(s => s.sectionId === selectedSectionId)?.sectionName}
                 </span>
               )}
@@ -350,14 +350,14 @@ export default function SectionsPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by name, roll, enrollment..."
-                className="pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-xl bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#FF5A36] w-60"
+                className="pl-8 pr-3 py-2 text-xs border border-slate-200 rounded-xl bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 w-60"
               />
             </div>
 
             <select
               value={selectedSectionId}
               onChange={(e) => setSelectedSectionId(e.target.value)}
-              className="px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+              className="px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
             >
               <option value="ALL">All Sections ({students.length})</option>
               {sections.map(s => {
@@ -390,13 +390,13 @@ export default function SectionsPage() {
                 const isEnrolled = stu.enrollmentStatus === 'Enrolled';
                 return (
                   <tr key={stu.studentId} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 px-3 font-mono font-extrabold text-[#FF5A36]">
-                      <span className="bg-[#FFF2EE] px-2.5 py-1 rounded-xl border border-[#FFD9CE]">
+                    <td className="py-3.5 px-3 font-mono font-extrabold text-blue-600">
+                      <span className="bg-blue-50 px-2.5 py-1 rounded-xl border border-blue-200">
                         {stu.rollNumber}
                       </span>
                     </td>
                     <td className="py-3.5 px-3 font-bold text-slate-900 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-2xl bg-[#FFF2EE] text-[#FF5A36] font-extrabold text-xs flex items-center justify-center shrink-0 border border-[#FFD9CE]">
+                      <div className="w-8 h-8 rounded-2xl bg-blue-50 text-blue-600 font-extrabold text-xs flex items-center justify-center shrink-0 border border-blue-200">
                         {stu.fullName?.[0] || 'S'}
                       </div>
                       <div>
@@ -408,7 +408,7 @@ export default function SectionsPage() {
                       {stu.enrollmentNumber || `ENR-${stu.class}${stu.section}-${stu.rollNumber}`}
                     </td>
                     <td className="py-3.5 px-3">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE]">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200">
                         Class {stu.class}-{stu.section}
                       </span>
                     </td>
@@ -464,7 +464,7 @@ export default function SectionsPage() {
               placeholder="e.g. B.Tech CSE, BCA Sem 2, Class 10, MBA, Batch A"
               value={newClassName}
               onChange={(e) => setNewClassName(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+              className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
             <div className="flex flex-wrap gap-1.5 mt-2">
               {['B.Tech CSE', 'BCA', 'MCA', 'MBA', 'Class 10', 'Class 12', 'Batch A'].map((preset) => (
@@ -474,7 +474,7 @@ export default function SectionsPage() {
                   onClick={() => setNewClassName(preset)}
                   className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-colors cursor-pointer ${
                     newClassName === preset
-                      ? 'bg-[#FFF2EE] text-[#FF5A36] border-[#FFD9CE]'
+                      ? 'bg-blue-50 text-blue-600 border-blue-200'
                       : 'bg-slate-50 text-slate-500 border-slate-200 hover:text-slate-800 hover:bg-slate-100'
                   }`}
                 >
@@ -492,7 +492,7 @@ export default function SectionsPage() {
               placeholder="e.g. A, B, Science, Commerce"
               value={newSectionName}
               onChange={(e) => setNewSectionName(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+              className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>
 
@@ -503,7 +503,7 @@ export default function SectionsPage() {
               placeholder="e.g. Room 302 or Lab 1"
               value={newRoom}
               onChange={(e) => setNewRoom(e.target.value)}
-              className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+              className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
           </div>
 
@@ -543,7 +543,7 @@ export default function SectionsPage() {
               <select
                 value={assignTargetClass}
                 onChange={(e) => setAssignTargetClass(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+                className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
               >
                 {Array.from(new Set([...sections.map(s => s.className), assignTargetClass].filter(Boolean))).map(cls => (
                   <option key={cls} value={cls}>{cls}</option>
@@ -556,7 +556,7 @@ export default function SectionsPage() {
               <select
                 value={assignTargetSection}
                 onChange={(e) => setAssignTargetSection(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+                className="w-full border border-slate-200 rounded-xl p-2.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
               >
                 {Array.from(new Set([...sections.filter(s => s.className === assignTargetClass).map(s => s.sectionName), assignTargetSection].filter(Boolean))).map(sec => (
                   <option key={sec} value={sec}>{sec}</option>

@@ -188,7 +188,7 @@ export default function CameraFeed({
                 type="button"
                 onClick={handleToggleFacingMode}
                 title={facingMode === 'user' ? 'Switch to Back Camera' : 'Switch to Front Camera'}
-                className="bg-[#ea580c] hover:bg-[#c2410c] text-white text-[11px] font-semibold px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold px-2.5 py-1 rounded flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <SwitchCamera className="w-3.5 h-3.5" />
                 <span>{facingMode === 'user' ? 'Back Cam' : 'Front Cam'}</span>

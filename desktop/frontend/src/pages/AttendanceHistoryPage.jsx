@@ -167,7 +167,7 @@ export default function AttendanceHistoryPage() {
       accessor: "date",
       render: (s) => (
         <div className="flex items-center gap-2.5">
-          <Calendar className="w-4 h-4 text-[#FF5A36]" />
+          <Calendar className="w-4 h-4 text-blue-600" />
           <div>
             <span className="font-bold text-slate-900 block">{formatKolkataDate(s.date)}</span>
             <span className="text-[10px] text-slate-400 font-mono">ID: {s.sessionId.slice(-8)}</span>
@@ -178,7 +178,7 @@ export default function AttendanceHistoryPage() {
     {
       header: "Class & Section",
       render: (s) => (
-        <span className="font-bold px-3 py-1 bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE] rounded-full text-xs">
+        <span className="font-bold px-3 py-1 bg-blue-50 text-blue-600 border border-blue-200 rounded-full text-xs">
           Class {s.class}-{s.section}
         </span>
       )
@@ -235,7 +235,7 @@ export default function AttendanceHistoryPage() {
         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
           s.status === 'completed'
             ? 'bg-slate-100 text-slate-700 border border-slate-200'
-            : 'bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE] animate-pulse'
+            : 'bg-blue-50 text-blue-600 border border-blue-200 animate-pulse'
         }`}>
           {s.status === 'completed' ? 'Finalized' : 'Live'}
         </span>
@@ -271,14 +271,14 @@ export default function AttendanceHistoryPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/60">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE]">
+            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-200">
               Session Ledger
             </span>
             <span className="text-slate-300">&bull;</span>
             <span className="text-xs text-slate-500 font-medium">Verified Records</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 mt-1.5">
-            <History className="w-6 h-6 text-[#FF5A36]" />
+            <History className="w-6 h-6 text-blue-600" />
             <span>Attendance History & Archives</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -353,14 +353,14 @@ export default function AttendanceHistoryPage() {
           </span>
         </div>
 
-        <div className="glass-card p-5 border-l-4 border-l-[#FF5A36]">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#FF5A36] block">
+        <div className="glass-card p-5 border-l-4 border-l-blue-600">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">
             Average Attendance Rate
           </span>
           <div className="text-3xl font-extrabold text-slate-900 mt-1">
             {averageAttendanceRate}%
           </div>
-          <span className="text-xs text-[#FF5A36] font-medium block mt-1">
+          <span className="text-xs text-blue-600 font-medium block mt-1">
             Institutional aggregate
           </span>
         </div>
@@ -370,7 +370,7 @@ export default function AttendanceHistoryPage() {
       <div className="glass-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2 font-bold text-slate-600">
-            <Filter className="w-4 h-4 text-[#FF5A36]" /> Filters:
+            <Filter className="w-4 h-4 text-blue-600" /> Filters:
           </div>
 
           <div className="flex items-center gap-2">
@@ -378,7 +378,7 @@ export default function AttendanceHistoryPage() {
             <select
               value={selectedSectionFilter}
               onChange={(e) => setSelectedSectionFilter(e.target.value)}
-              className="border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+              className="border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
             >
               <option value="ALL">All Sections ({sessions.length})</option>
               {sections.map(sec => (
@@ -395,12 +395,12 @@ export default function AttendanceHistoryPage() {
               type="date"
               value={selectedDateFilter}
               onChange={(e) => setSelectedDateFilter(e.target.value)}
-              className="border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+              className="border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
             />
             {selectedDateFilter && (
               <button
                 onClick={() => setSelectedDateFilter('')}
-                className="text-[#FF5A36] hover:underline font-bold text-xs"
+                className="text-blue-600 hover:underline font-bold text-xs"
               >
                 Clear Date
               </button>
@@ -489,7 +489,7 @@ export default function AttendanceHistoryPage() {
                       <span className="font-mono text-slate-400 w-6 font-bold">
                         {stu?.rollNumber || '—'}
                       </span>
-                      <div className="w-8 h-8 rounded-2xl bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE] overflow-hidden flex items-center justify-center shrink-0 font-extrabold text-xs">
+                      <div className="w-8 h-8 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 overflow-hidden flex items-center justify-center shrink-0 font-extrabold text-xs">
                         <img
                           src={r.hasSnapshot ? apiService.getAttendanceSnapshotUrl(r.recordId) : apiService.getStudentPhotoUrl(r.studentId)}
                           alt={stu?.fullName || r.studentId}

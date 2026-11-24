@@ -207,7 +207,7 @@ export default function StudentsPage() {
       header: "Roll #",
       accessor: "rollNumber",
       render: (s) => (
-        <span className="font-mono font-extrabold text-[#FF5A36] bg-[#FFF2EE] px-2.5 py-1 rounded-xl border border-[#FFD9CE]">
+        <span className="font-mono font-extrabold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-xl border border-blue-200">
           {s.rollNumber}
         </span>
       )
@@ -217,7 +217,7 @@ export default function StudentsPage() {
       accessor: "fullName",
       render: (s) => (
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-2xl bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE] flex items-center justify-center font-extrabold text-xs overflow-hidden shrink-0">
+          <div className="w-9 h-9 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center font-extrabold text-xs overflow-hidden shrink-0">
             {s.enrollmentStatus === 'Enrolled' ? (
               <img
                 src={apiService.getStudentPhotoUrl(s.studentId)}
@@ -249,7 +249,7 @@ export default function StudentsPage() {
     {
       header: "Section",
       render: (s) => (
-        <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE]">
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200">
           Class {s.class}-{s.section}
         </span>
       )
@@ -284,7 +284,7 @@ export default function StudentsPage() {
           <button
             onClick={() => navigate(`/enrollment?studentId=${s.studentId}`)}
             title="Biometric Photo Enrollment"
-            className="p-1.5 text-[#FF5A36] hover:bg-[#FFF2EE] rounded-xl transition-colors border border-[#FFD9CE]"
+            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors border border-blue-200"
           >
             <Camera className="w-3.5 h-3.5" />
           </button>
@@ -313,14 +313,14 @@ export default function StudentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/60">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE]">
+            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-200">
               Student Directory
             </span>
             <span className="text-slate-300">&bull;</span>
             <span className="text-xs text-slate-500 font-medium">Academic Records</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 mt-1.5">
-            <GraduationCap className="w-6 h-6 text-[#FF5A36]" />
+            <GraduationCap className="w-6 h-6 text-blue-600" />
             <span>Enrolled Students</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -366,7 +366,7 @@ export default function StudentsPage() {
       <div className="glass-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2 text-xs text-slate-600 font-bold">
-            <Filter className="w-4 h-4 text-[#FF5A36]" /> Section Filters:
+            <Filter className="w-4 h-4 text-blue-600" /> Section Filters:
           </div>
 
           <div className="flex items-center gap-2 text-xs">
@@ -374,7 +374,7 @@ export default function StudentsPage() {
             <select
               value={selectedClass}
               onChange={(e) => setSelectedClass(e.target.value)}
-              className="border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 bg-white font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+              className="border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 bg-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
             >
               <option value="ALL">All Classrooms</option>
               {Array.from(new Set([...sections.map(s => s.className), ...students.map(s => s.class)].filter(Boolean))).map(cls => (
@@ -388,7 +388,7 @@ export default function StudentsPage() {
             <select
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
-              className="border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 bg-white font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+              className="border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 bg-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
             >
               <option value="ALL">All Sections</option>
               {Array.from(new Set([...sections.map(s => s.sectionName), ...students.map(s => s.section)].filter(Boolean))).map(sec => (
@@ -443,7 +443,7 @@ export default function StudentsPage() {
                 type="text"
                 value={formData.rollNumber}
                 onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="e.g. 01"
                 required
               />
@@ -456,7 +456,7 @@ export default function StudentsPage() {
               type="text"
               value={formData.fullName}
               onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600"
               placeholder="e.g. Aarav Sharma"
               required
             />
@@ -469,7 +469,7 @@ export default function StudentsPage() {
                 type="text"
                 value={formData.enrollmentNumber}
                 onChange={(e) => setFormData({ ...formData, enrollmentNumber: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-mono uppercase focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-mono uppercase focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="e.g. ENR-2026-001"
                 required
               />
@@ -482,7 +482,7 @@ export default function StudentsPage() {
                   const [c, s] = e.target.value.split('|||');
                   setFormData({ ...formData, class: c, section: s });
                 }}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
               >
                 {sections.map(sec => (
                   <option key={sec.sectionId} value={`${sec.className}|||${sec.sectionName}`}>
@@ -505,7 +505,7 @@ export default function StudentsPage() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="student@institution.edu"
               />
             </div>
@@ -515,7 +515,7 @@ export default function StudentsPage() {
                 type="tel"
                 value={formData.contactNumber}
                 onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                 placeholder="+91 98765 43210"
               />
             </div>

@@ -145,19 +145,19 @@ export default function DashboardPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
               <span className="flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-xl border border-slate-200/50 shadow-2xs">
-                <Calendar className="w-3.5 h-3.5 text-[#FF5A36]" />
+                <Calendar className="w-3.5 h-3.5 text-blue-600" />
                 {formatKolkataDate(currentDateTime)}
               </span>
               <span>&bull;</span>
-              <span className="font-mono text-[#FF5A36] font-bold flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-xl border border-slate-200/50 shadow-2xs">
-                <Clock className="w-3.5 h-3.5 text-[#FF5A36]" />
+              <span className="font-mono text-blue-600 font-bold flex items-center gap-1.5 bg-white/90 px-3 py-1.5 rounded-xl border border-slate-200/50 shadow-2xs">
+                <Clock className="w-3.5 h-3.5 text-blue-600" />
                 {formatKolkataTime(currentDateTime)} IST
               </span>
             </div>
 
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-2.5">
               <span>{getGreeting()}, {lecturerName}</span>
-              <Sparkles className="w-5 h-5 text-[#FF5A36] shrink-0" />
+              <Sparkles className="w-5 h-5 text-blue-600 shrink-0" />
             </h1>
             <p className="text-sm text-slate-600 max-w-2xl font-medium">
               {departmentName} &bull; Manage student attendance and view live classroom reports.
@@ -279,18 +279,18 @@ export default function DashboardPage() {
         {/* Turnout Percentage in Wink Coral */}
         <div
           onClick={() => navigate('/history')}
-          className="glass-card p-6 cursor-pointer hover:border-[#FFD9CE] group border-l-4 border-l-[#FF5A36]"
+          className="glass-card p-6 cursor-pointer hover:border-blue-200 group border-l-4 border-l-blue-600"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Turnout Rate
             </span>
-            <div className="w-10 h-10 rounded-2xl bg-[#FFF2EE] border border-[#FFD9CE] flex items-center justify-center text-[#FF5A36] group-hover:scale-105 transition-transform shadow-2xs">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform shadow-2xs">
               <Percent className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-[#FF5A36] tracking-tight">
+            <span className="text-3xl font-extrabold text-blue-600 tracking-tight">
               {attendanceRate}%
             </span>
             <span className="text-xs text-slate-500 font-medium">
@@ -298,10 +298,10 @@ export default function DashboardPage() {
             </span>
           </div>
           <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-            <span className="text-[#FF5A36] font-semibold">
+            <span className="text-blue-600 font-semibold">
               {attendanceRate >= 75 ? 'Good attendance' : 'Needs attention'}
             </span>
-            <span className="text-[#FF5A36] font-bold group-hover:translate-x-0.5 transition-transform flex items-center">
+            <span className="text-blue-600 font-bold group-hover:translate-x-0.5 transition-transform flex items-center">
               History &rarr;
             </span>
           </div>
@@ -321,7 +321,7 @@ export default function DashboardPage() {
           </div>
           <button
             onClick={() => navigate('/sections')}
-            className="text-xs text-[#FF5A36] hover:text-[#e84d2b] font-bold cursor-pointer"
+            className="text-xs text-blue-600 hover:text-[#e84d2b] font-bold cursor-pointer"
           >
             Manage Classes &rarr;
           </button>
@@ -337,7 +337,7 @@ export default function DashboardPage() {
               return (
                 <div
                   key={sec.section_id || `${secClass}-${secName}`}
-                  className="p-5 rounded-3xl border border-slate-100 bg-white hover:border-[#FFD9CE] transition-all shadow-2xs flex flex-col justify-between space-y-3"
+                  className="p-5 rounded-xl border border-slate-100 bg-white hover:border-blue-200 transition-all shadow-2xs flex flex-col justify-between space-y-3"
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -348,7 +348,7 @@ export default function DashboardPage() {
                         {count} Enrolled Students
                       </p>
                     </div>
-                    <span className="w-8 h-8 rounded-xl bg-[#FFF2EE] text-[#FF5A36] font-extrabold text-xs flex items-center justify-center font-mono border border-[#FFD9CE]">
+                    <span className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 font-extrabold text-xs flex items-center justify-center font-mono border border-blue-200">
                       {secClass}
                     </span>
                   </div>
@@ -384,7 +384,7 @@ export default function DashboardPage() {
           </div>
           <button
             onClick={() => navigate('/history')}
-            className="text-xs text-[#FF5A36] hover:text-[#e84d2b] font-bold cursor-pointer"
+            className="text-xs text-blue-600 hover:text-[#e84d2b] font-bold cursor-pointer"
           >
             View Full History &rarr;
           </button>
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                       </td>
                       <td className="py-3.5 px-3 text-right">
                         {s.status === 'in_progress' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE]">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#FF5A36] animate-ping" />
                             Live
                           </span>

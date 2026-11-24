@@ -298,14 +298,14 @@ export default function AttendanceSessionPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/60">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE]">
+            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-200">
               Biometric Attendance
             </span>
             <span className="text-slate-300">&bull;</span>
             <span className="text-xs text-slate-500 font-medium">One-Click Session</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2 mt-1.5">
-            <Play className="w-6 h-6 text-[#FF5A36] fill-[#FF5A36]" />
+            <Play className="w-6 h-6 text-blue-600 fill-[#FF5A36]" />
             <span>Take Class Attendance</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -353,7 +353,7 @@ export default function AttendanceSessionPage() {
             ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
             : statusMessage.type === 'error'
             ? 'bg-rose-50 border border-rose-200 text-rose-800'
-            : 'bg-[#FFF2EE] border border-[#FFD9CE] text-[#FF5A36]'
+            : 'bg-blue-50 border border-blue-200 text-blue-600'
         }`}>
           {statusMessage.type === 'success' ? (
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -406,14 +406,14 @@ export default function AttendanceSessionPage() {
         </div>
 
         {/* Attendance Percentage (Wink Coral) */}
-        <div className="glass-card p-5 border-l-4 border-l-[#FF5A36]">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#FF5A36] block">
+        <div className="glass-card p-5 border-l-4 border-l-blue-600">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 block">
             Attendance Rate
           </span>
           <div className="text-3xl font-extrabold text-slate-900 mt-1">
             {attendanceRate}%
           </div>
-          <span className="text-xs text-[#FF5A36] font-medium block mt-1">
+          <span className="text-xs text-blue-600 font-medium block mt-1">
             {presentCount} of {classRoster.length} Present
           </span>
         </div>
@@ -433,7 +433,7 @@ export default function AttendanceSessionPage() {
                   const matchingSec = sections.find(s => s.className === nextClass);
                   if (matchingSec) setSelectedSection(matchingSec.sectionName);
                 }}
-                className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+                className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
               >
                 {Array.from(new Set([...sections.map(s => s.className), selectedClass].filter(Boolean))).map(cls => (
                   <option key={cls} value={cls}>{cls}</option>
@@ -446,7 +446,7 @@ export default function AttendanceSessionPage() {
               <select
                 value={selectedSection}
                 onChange={(e) => setSelectedSection(e.target.value)}
-                className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+                className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
               >
                 {Array.from(new Set([
                   ...sections.filter(s => s.className === selectedClass).map(s => s.sectionName),
@@ -464,7 +464,7 @@ export default function AttendanceSessionPage() {
                 type="date"
                 value={sessionDate}
                 onChange={(e) => setSessionDate(e.target.value)}
-                className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+                className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             </div>
 
@@ -475,7 +475,7 @@ export default function AttendanceSessionPage() {
                 value={sessionSubject}
                 onChange={(e) => setSessionSubject(e.target.value)}
                 placeholder="e.g. Mathematics, DBMS, Physics"
-                className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-[#FF5A36]"
+                className="border border-slate-200 rounded-xl px-3.5 py-2 bg-white text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             </div>
           </div>
@@ -488,7 +488,7 @@ export default function AttendanceSessionPage() {
 
       {/* 4. Active Session Alert Banner */}
       {activeSession && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-3xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3">
             <div className="relative flex items-center justify-center">
               <span className="animate-ping absolute inline-flex h-4 w-4 rounded-full bg-emerald-400 opacity-75"></span>
@@ -535,7 +535,7 @@ export default function AttendanceSessionPage() {
             </div>
             <button
               onClick={() => navigate('/camera')}
-              className="text-[#FF5A36] hover:text-[#e84d2b] font-bold flex items-center gap-1"
+              className="text-blue-600 hover:text-[#e84d2b] font-bold flex items-center gap-1"
             >
               <Camera className="w-3.5 h-3.5" />
               <span>Camera Settings</span>
@@ -644,7 +644,7 @@ export default function AttendanceSessionPage() {
                 <br />
                 <button
                   onClick={() => navigate('/students')}
-                  className="mt-3 text-[#FF5A36] hover:text-[#e84d2b] font-bold inline-block"
+                  className="mt-3 text-blue-600 hover:text-[#e84d2b] font-bold inline-block"
                 >
                   Enroll Students in this Section &rarr;
                 </button>

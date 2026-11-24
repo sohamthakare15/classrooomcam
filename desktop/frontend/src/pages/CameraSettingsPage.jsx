@@ -166,14 +166,14 @@ export default function CameraSettingsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/60">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF2EE] text-[#FF5A36] border border-[#FFD9CE]">
+            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-200">
               Optical Sensors & AI
             </span>
             <span className="text-slate-300">&bull;</span>
             <span className="text-xs text-slate-500 font-medium">Camera Hardware</span>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5 mt-1.5">
-            <Camera className="w-6 h-6 text-[#FF5A36]" />
+            <Camera className="w-6 h-6 text-blue-600" />
             <span>Camera Modes & Optical View</span>
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -247,7 +247,7 @@ export default function CameraSettingsPage() {
           {/* Quick Info Dashlet */}
           <div className="glass-card p-4 border border-white/90 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FF5A36] to-[#FF7849] flex items-center justify-center text-white shadow-xs">
+              <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-xs">
                 <Tv className="w-4 h-4" />
               </div>
               <div>
@@ -275,7 +275,7 @@ export default function CameraSettingsPage() {
           <div className="glass-card p-5 border border-white/90 shadow-md">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Settings2 className="w-4 h-4 text-[#FF5A36]" />
+                <Settings2 className="w-4 h-4 text-blue-600" />
                 <h2 className="text-sm font-extrabold text-slate-900">Select Camera Mode</h2>
               </div>
               <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
@@ -290,7 +290,7 @@ export default function CameraSettingsPage() {
                 onClick={() => setActiveTab('WEBCAM')}
                 className={`py-2 px-2 text-center rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
                   activeTab === 'WEBCAM'
-                    ? 'bg-white text-[#FF5A36] shadow-xs'
+                    ? 'bg-white text-blue-600 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -303,7 +303,7 @@ export default function CameraSettingsPage() {
                 onClick={() => setActiveTab('RTSP')}
                 className={`py-2 px-2 text-center rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 ${
                   activeTab === 'RTSP'
-                    ? 'bg-white text-[#FF5A36] shadow-xs'
+                    ? 'bg-white text-blue-600 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
@@ -315,7 +315,7 @@ export default function CameraSettingsPage() {
             {/* TAB 1: WEBCAM */}
             {activeTab === 'WEBCAM' && (
               <div className="space-y-4 text-xs">
-                <div className="p-3 bg-[#FFF2EE] rounded-2xl border border-[#FFD9CE] text-[#FF5A36] flex items-start gap-2">
+                <div className="p-3 bg-blue-50 rounded-2xl border border-blue-200 text-blue-600 flex items-start gap-2">
                   <Video className="w-4 h-4 shrink-0 mt-0.5" />
                   <span className="font-semibold text-[11px]">
                     Use your laptop's integrated camera or any external USB webcam plugged directly into your machine.
@@ -383,7 +383,7 @@ export default function CameraSettingsPage() {
                       type="radio"
                       checked={useDirectUrl}
                       onChange={() => setUseDirectUrl(true)}
-                      className="text-[#FF5A36] focus:ring-[#FF5A36]"
+                      className="text-blue-600 focus:ring-blue-600"
                     />
                     <span>Full RTSP URL</span>
                   </label>
@@ -392,7 +392,7 @@ export default function CameraSettingsPage() {
                       type="radio"
                       checked={!useDirectUrl}
                       onChange={() => setUseDirectUrl(false)}
-                      className="text-[#FF5A36] focus:ring-[#FF5A36]"
+                      className="text-blue-600 focus:ring-blue-600"
                     />
                     <span>IP / Hostname</span>
                   </label>

@@ -132,7 +132,7 @@ function AppLayout() {
             to="/"
             className={({ isActive }) =>
               `flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-                isActive ? 'text-[#FF5A36]' : 'text-slate-500 hover:text-slate-800'
+                isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'
               }`
             }
           >
@@ -143,7 +143,7 @@ function AppLayout() {
             to="/attendance"
             className={({ isActive }) =>
               `flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-                isActive ? 'text-[#FF5A36]' : 'text-slate-500 hover:text-slate-800'
+                isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'
               }`
             }
           >
@@ -154,7 +154,7 @@ function AppLayout() {
             to="/students"
             className={({ isActive }) =>
               `flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-                isActive ? 'text-[#FF5A36]' : 'text-slate-500 hover:text-slate-800'
+                isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'
               }`
             }
           >
@@ -165,7 +165,7 @@ function AppLayout() {
             to="/sections"
             className={({ isActive }) =>
               `flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-                isActive ? 'text-[#FF5A36]' : 'text-slate-500 hover:text-slate-800'
+                isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'
               }`
             }
           >
@@ -177,7 +177,7 @@ function AppLayout() {
               to="/admin"
               className={({ isActive }) =>
                 `flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-                  isActive ? 'text-[#FF5A36]' : 'text-slate-500 hover:text-slate-800'
+                  isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'
                 }`
               }
             >
@@ -189,7 +189,7 @@ function AppLayout() {
               to="/history"
               className={({ isActive }) =>
                 `flex flex-col items-center gap-1 py-1 px-2.5 rounded-xl text-[10px] font-bold transition-all ${
-                  isActive ? 'text-[#FF5A36]' : 'text-slate-500 hover:text-slate-800'
+                  isActive ? 'text-blue-600' : 'text-slate-500 hover:text-slate-800'
                 }`
               }
             >
